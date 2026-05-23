@@ -1,0 +1,205 @@
+.relatorio-page {
+    max-width: 100%;
+}
+
+.relatorio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.relatorio-header h2 {
+    margin: 0;
+}
+
+.relatorio-subtitulo {
+    margin: 4px 0 0 0;
+    color: #666;
+}
+
+.relatorio-acoes {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filtros-relatorio {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.filtros-relatorio label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.filtros-relatorio input,
+.filtros-relatorio select {
+    width: 100%;
+    padding: 9px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.acoes-filtro {
+    display: flex;
+    align-items: end;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.cards-resumo {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.card-resumo {
+    background: #fff;
+    border: 1px solid #e2e2e2;
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.04);
+}
+
+.card-resumo .titulo {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.card-resumo .valor {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1f4e78;
+}
+
+.resumos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(260px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.mini-resumo {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.mini-resumo h4 {
+    margin: 0 0 10px 0;
+    color: #1f4e78;
+}
+
+.mini-resumo table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.mini-resumo th,
+.mini-resumo td {
+    padding: 7px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    text-align: left;
+}
+
+.tabela-container {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid #e5e5e5;
+}
+
+.tabela-relatorio {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.tabela-relatorio th {
+    background: #1f4e78;
+    color: white;
+    padding: 10px;
+    font-size: 13px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.tabela-relatorio td {
+    padding: 9px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    vertical-align: top;
+}
+
+.tabela-relatorio tr:hover {
+    background: #f7fbff;
+}
+
+.badge-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: #eef3f8;
+    color: #1f4e78;
+}
+
+.badge-pago {
+    background: #e2f0d9;
+    color: #226622;
+}
+
+.badge-pendente {
+    background: #fff2cc;
+    color: #7f6000;
+}
+
+.badge-cancelado {
+    background: #f4cccc;
+    color: #990000;
+}
+
+.texto-vazio {
+    padding: 25px;
+    text-align: center;
+    color: #777;
+}
+
+@media (max-width: 1100px) {
+    .filtros-relatorio,
+    .cards-resumo,
+    .resumos-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .filtros-relatorio,
+    .cards-resumo,
+    .resumos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .relatorio-acoes {
+        width: 100%;
+    }
+
+    .relatorio-acoes .btn {
+        width: 100%;
+        text-align: center;
+    }
+}

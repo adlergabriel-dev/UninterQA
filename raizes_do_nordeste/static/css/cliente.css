@@ -1,0 +1,98 @@
+.pedido-mensagem-cliente {
+    color: #555;
+    font-size: 14px;
+    margin-top: 6px;
+}
+
+.pedido-progresso {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin: 14px 0;
+}
+
+.pedido-progresso-item {
+    text-align: center;
+    color: #999;
+    font-size: 12px;
+}
+
+.pedido-progresso-item span {
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #777;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.pedido-progresso-item small {
+    display: block;
+    line-height: 1.2;
+}
+
+.pedido-progresso-item.ativo {
+    color: #1f4e78;
+    font-weight: 700;
+}
+
+.pedido-progresso-item.ativo span {
+    background: #1f4e78;
+    color: #fff;
+}
+
+.pedido-progresso-detalhe {
+    margin-top: 18px;
+}
+
+.badge-status-aguardando-pagamento {
+    background: #fff2cc;
+    color: #7f6000;
+}
+
+.badge-status-confirmado {
+    background: #d9eaf7;
+    color: #1f4e78;
+}
+
+.badge-status-em-preparo {
+    background: #fff2cc;
+    color: #7f6000;
+}
+
+.badge-status-pronto {
+    background: #e2f0d9;
+    color: #226622;
+}
+
+.badge-status-finalizado {
+    background: #d9ead3;
+    color: #226622;
+}
+
+.badge-status-cancelado {
+    background: #f4cccc;
+    color: #990000;
+}
+
+@media (max-width: 700px) {
+    .pedido-progresso {
+        grid-template-columns: 1fr;
+        text-align: left;
+    }
+
+    .pedido-progresso-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-align: left;
+    }
+
+    .pedido-progresso-item span {
+        margin-bottom: 0;
+    }
+}
