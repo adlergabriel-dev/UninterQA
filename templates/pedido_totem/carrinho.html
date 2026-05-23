@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="mb-4">
+        <h2 class="fw-bold">Meu Pedido</h2>
+        <p class="text-muted">
+            {{ unidade.nome or unidade.unidade_nome or unidade.nome_unidade or "" }}
+        </p>
+    </div>
+
+    <div id="area-carrinho"></div>
+
+    <form method="POST" action="{{ url_for('pedido_totem.finalizar') }}" id="form-finalizar" class="card shadow-sm mt-4" style="display:none;">
+        <div class="card-body">
+
+            <input type="hidden" name="unidade_id" value="{{ unidade.id }}">
+            <input type="hidden" name="itens_json" id="itens_json">
+
+            <div class="mb-3">
+                <label class="form-label">Nome para retirada</label>
+                <input type="text"
+                       name="cliente_nome"
+                       class="form-control form-control-lg"
+                       placeholder="Ex: Adler">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Forma de pagamento</label>
+                <select name="forma_pagamento" class="form-select form-select-lg">
+                    <option value="TOTEM">Pagamento no Totem</option>
+                    <option value="PIX">PIX</option>
+                    <option value="CARTAO">Cartão</option>
+                    <option value="DINHEIRO">Dinheiro</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Observação</label>
+                <textarea name="observacao"
+                          class="form-control"
+                          rows="3"
+                          placeholder="Ex: sem cebola, sem pimenta..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-success btn-lg w-100">
+                Confirmar Pedido
+            </button>
+
+            <button type="button"
+                    onclick="limparCarrinho()"
+                    class="btn btn-outline-danger btn-lg w-100 mt-3">
+                Limpar Pedido
+            </button>
+
+        </div>
+    </form>
+
+    <div class="mt-4">
+        <a href="{{ url_for('pedido_totem.cardapio', unidade_id=unidade.id) }}"
+           class="btn btn-outline-secondary">
+            Voltar ao cardápio
+        </a>
+    </div>
+
+</div>
+
+<script>
+const UNIDADE_ID = "{{ unidade.id }}";
+const STORAGE_KEY = "totem_carrinho_" + UNIDADE_ID;
+
+const areaCarrinho = document.getElementById("area-carrinho");
+const formFinalizar = document.getElementById("form-finalizar");
+const itensJsonInput = document.getElementById("itens_json");
+
+function formatarMoeda(valor) {
+    return Number(valor || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+}
+
+function obterCarrinho() {
+    try {
+        const dados = localStorage.getItem(STORAGE_KEY);
+        return dados ? JSON.parse(dados) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function salvarCarrinho(carrinho) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(carrinho));
+}
+
+function removerItem(cardapioId) {
+    let carrinho = obterCarrinho();
+
+    carrinho = carrinho.filter(item => String(item.cardapio_id) !== String(cardapioId));
+
+    salvarCarrinho(carrinho);
+    renderizarCarrinho();
+}
+
+function limparCarrinho() {
+    localStorage.removeItem(STORAGE_KEY);
+    renderizarCarrinho();
+}
+
+function renderizarCarrinho() {
+    const carrinho = obterCarrinho();
+
+    if (!carrinho.length) {
+        areaCarrinho.innerHTML = `
+            <div class="alert alert-warning">
+                Seu carrinho está vazio.
+            </div>
+        `;
+
+        formFinalizar.style.display = "none";
+        itensJsonInput.value = "[]";
+        return;
+    }
+
+    let total = 0;
+    let html = `
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+    `;
+
+    carrinho.forEach(item => {
+        const quantidade = Number(item.quantidade || 1);
+        const valorUnitario = Number(item.valor_unitario || 0);
+        const valorTotal = quantidade * valorUnitario;
+
+        total += valorTotal;
+
+        html += `
+            <div class="d-flex justify-content-between align-items-center border-bottom py-3">
+                <div>
+                    <h5 class="fw-bold mb-1">
+                        ${item.produto_nome || item.nome || "Produto sem nome"}
+                    </h5>
+
+                    <p class="mb-0 text-muted">
+                        ${quantidade} x ${formatarMoeda(valorUnitario)}
+                    </p>
+                </div>
+
+                <div class="text-end">
+                    <h5 class="fw-bold">
+                        ${formatarMoeda(valorTotal)}
+                    </h5>
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            onclick="removerItem('${item.cardapio_id}')">
+                        Remover
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `
+            <div class="text-end mt-4">
+                <h2 class="fw-bold text-success">
+                    Total: ${formatarMoeda(total)}
+                </h2>
+            </div>
+        </div>
+    </div>
+    `;
+
+    areaCarrinho.innerHTML = html;
+    formFinalizar.style.display = "block";
+    itensJsonInput.value = JSON.stringify(carrinho);
+}
+
+document.getElementById("form-finalizar").addEventListener("submit", function(e) {
+    const carrinho = obterCarrinho();
+
+    if (!carrinho.length) {
+        e.preventDefault();
+        alert("Carrinho vazio.");
+        return;
+    }
+
+    itensJsonInput.value = JSON.stringify(carrinho);
+
+    setTimeout(() => {
+        localStorage.removeItem(STORAGE_KEY);
+    }, 500);
+});
+
+renderizarCarrinho();
+</script>
+{% endblock %}

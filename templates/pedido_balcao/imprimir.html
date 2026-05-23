@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Comprovante do Pedido {{ pedido.codigo_pedido or '' }}</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #222;
+            margin: 24px;
+        }
+        .topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 16px;
+        }
+        .empresa h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .empresa p {
+            margin: 4px 0;
+            color: #555;
+        }
+        .bloco {
+            margin-bottom: 20px;
+        }
+        .bloco h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 6px;
+        }
+        .linha {
+            margin: 4px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background: #f2f2f2;
+        }
+        .totais {
+            margin-top: 16px;
+            width: 320px;
+            margin-left: auto;
+        }
+        .totais td {
+            font-weight: bold;
+        }
+        .acoes {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 14px;
+            border: 1px solid #333;
+            text-decoration: none;
+            color: #111;
+            cursor: pointer;
+            background: #fff;
+        }
+        @media print {
+            .acoes {
+                display: none;
+            }
+            body {
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="topo">
+        <div class="empresa">
+            <h1>Raízes do Nordeste</h1>
+            <p>Comprovante de Pedido Balcão</p>
+        </div>
+
+        <div>
+            <div class="linha"><strong>Código:</strong> {{ pedido.codigo_pedido or "-" }}</div>
+            <div class="linha"><strong>Status:</strong> {{ (pedido.status or "-").replace('_', ' ') }}</div>
+            <div class="linha"><strong>Data:</strong> {{ pedido.criado_em_texto or "-" }}</div>
+        </div>
+    </div>
+
+    <div class="bloco">
+        <h3>Dados do Pedido</h3>
+        <div class="linha"><strong>Filial:</strong> {{ pedido.unidade_nome or "-" }}</div>
+        <div class="linha"><strong>Forma de Pagamento:</strong> {{ (pedido.forma_pagamento or "-").replace('_', ' ') }}</div>
+        <div class="linha"><strong>Situação do Pagamento:</strong> {{ (pedido.situacao_pagamento or "PENDENTE").replace('_', ' ') }}</div>
+        <div class="linha"><strong>Pago em:</strong> {{ pedido.pago_em_texto or "-" }}</div>
+        <div class="linha"><strong>Atendente:</strong> {{ pedido.usuario_nome or "-" }}</div>
+        <div class="linha"><strong>Observação:</strong> {{ pedido.observacao or "-" }}</div>
+    </div>
+
+    <div class="bloco">
+        <h3>Dados do Cliente</h3>
+        <div class="linha"><strong>Nome:</strong> {{ pedido.cliente_nome or "-" }}</div>
+        <div class="linha"><strong>Telefone:</strong> {{ pedido.cliente_telefone or "-" }}</div>
+        <div class="linha"><strong>E-mail:</strong> {{ pedido.cliente_email or "-" }}</div>
+    </div>
+
+    <div class="bloco">
+        <h3>Itens do Pedido</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Quantidade</th>
+                    <th>Valor Unitário</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pedido.itens or [] %}
+                <tr>
+                    <td>{{ item.nome or "-" }}</td>
+                    <td>{{ item.quantidade or 0 }}</td>
+                    <td>R$ {{ '%.2f'|format((item.valor_unitario or 0)|float) }}</td>
+                    <td>R$ {{ '%.2f'|format((item.valor_total or 0)|float) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <table class="totais">
+            <tr>
+                <td>Subtotal</td>
+                <td>R$ {{ '%.2f'|format((pedido.subtotal or 0)|float) }}</td>
+            </tr>
+            <tr>
+                <td>Total</td>
+                <td>R$ {{ '%.2f'|format((pedido.total or 0)|float) }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="acoes">
+        <button class="btn" onclick="window.print()">Imprimir</button>
+        <a class="btn" href="{{ url_for('pedido_balcao.detalhe', pedido_id=pedido.id) }}">Voltar</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="header-actions">
+        <h2>Detalhe do Pedido</h2>
+        <a class="btn btn-secondary" href="{{ url_for('pedidos_admin.lista') }}">Voltar</a>
+    </div>
+
+    {% if pedido.fechado_em_caixa %}
+        {% set fechamento = pedido.fechamento_caixa or {} %}
+
+        <div class="alert alert-warning">
+            <strong>Pedido bloqueado para alterações.</strong><br>
+            Este pedido já faz parte de um fechamento de caixa e não pode mais ter pagamento, cancelamento ou status alterado.
+
+            <div style="margin-top: 10px;">
+                <p><strong>Fechamento:</strong> {{ fechamento.id or "-" }}</p>
+                <p><strong>Período:</strong> {{ fechamento.data_inicio or "-" }} até {{ fechamento.data_fim or "-" }}</p>
+                <p><strong>Filial:</strong> {{ fechamento.unidade_nome or "-" }}</p>
+                <p><strong>Fechado por:</strong> {{ fechamento.usuario_nome or "-" }}</p>
+                <p><strong>Fechado em:</strong> {{ fechamento.criado_em_texto or "-" }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="filtros-grid">
+        <div>
+            <p><strong>Código:</strong> {{ pedido.codigo_pedido }}</p>
+            <p><strong>Cliente:</strong> {{ pedido.cliente_nome }}</p>
+            <p><strong>E-mail:</strong> {{ pedido.cliente_email or "-" }}</p>
+            <p><strong>Telefone:</strong> {{ pedido.cliente_telefone or "-" }}</p>
+        </div>
+
+        <div>
+            <p><strong>Unidade:</strong> {{ pedido.unidade_nome }}</p>
+            <p>
+                <strong>Status:</strong>
+                <span class="{{ pedido.status_classe }}">{{ pedido.status_descricao }}</span>
+            </p>
+            <p><strong>Origem:</strong> {{ pedido.origem or "-" }}</p>
+            <p><strong>Total:</strong> {{ pedido.valor_total_formatado }}</p>
+        </div>
+
+        <div>
+            <p><strong>Criado em:</strong> {{ pedido.criado_em | datetime_br }}</p>
+            <p><strong>Atualizado em:</strong> {{ pedido.atualizado_em | datetime_br }}</p>
+            <p><strong>Atualizado por:</strong> {{ pedido.status_atualizado_por or "-" }}</p>
+
+            {% if pedido.cancelado_em %}
+                <p><strong>Cancelado em:</strong> {{ pedido.cancelado_em | datetime_br }}</p>
+            {% endif %}
+
+            {% if pedido.fechado_em_caixa %}
+                <p>
+                    <strong>Situação financeira:</strong>
+                    <span class="status-badge status-cancelado">Fechado em caixa</span>
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="header-actions">
+        <h3>Pagamento</h3>
+    </div>
+
+    <div class="filtros-grid">
+        <div>
+            <p>
+                <strong>Status:</strong>
+                <span class="{{ pedido.pagamento_status_classe }}">
+                    {{ pedido.pagamento_status_descricao }}
+                </span>
+            </p>
+            <p>
+                <strong>Forma escolhida:</strong>
+                {{ pedido.pagamento_metodo_descricao or pedido.pagamento_metodo or pedido.forma_pagamento or "-" }}
+            </p>
+        </div>
+
+        <div>
+            <p><strong>Valor:</strong> {{ pedido.pagamento_valor_formatado }}</p>
+            <p><strong>Transação:</strong> {{ pedido.pagamento_transacao_id or "-" }}</p>
+        </div>
+
+        <div>
+            <p><strong>Pago em:</strong> {{ pedido.pago_em | datetime_br }}</p>
+        </div>
+    </div>
+
+    {% if pedido.fechado_em_caixa %}
+        <div class="alert alert-info" style="margin-top: 16px;">
+            O pagamento não pode ser alterado porque este pedido já está vinculado a um fechamento de caixa.
+        </div>
+    {% else %}
+        <form method="POST" action="{{ url_for('pedidos_admin.simular_pagamento', pedido_id=pedido.id) }}" style="margin-top: 16px;">
+            <div class="form-group">
+                <label>Resultado da Simulação</label>
+                <select name="resultado_pagamento" required>
+                    <option value="">Selecione</option>
+                    <option value="PAGO">Pago</option>
+                    <option value="RECUSADO">Recusado</option>
+                </select>
+            </div>
+
+            <div class="filtros-acoes">
+                <button type="submit">Salvar Pagamento</button>
+            </div>
+        </form>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="header-actions">
+        <h3>Itens do Pedido</h3>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Descrição</th>
+                    <th>Quantidade</th>
+                    <th>Preço Unitário</th>
+                    <th>Subtotal</th>
+                    <th>Observação</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in pedido.itens %}
+                    {% set snap = item.snapshot_produto or {} %}
+
+                    {% set produto_nome =
+                        item.produto_nome
+                        or item.nome_produto
+                        or item.nome
+                        or snap.produto_nome
+                        or snap.nome
+                        or "-"
+                    %}
+
+                    {% set produto_descricao =
+                        item.produto_descricao
+                        or item.descricao_produto
+                        or item.descricao
+                        or snap.produto_descricao
+                        or snap.descricao
+                        or "-"
+                    %}
+
+                    {% set preco_unitario =
+                        item.preco_unitario_formatado
+                        or item.valor_unitario_formatado
+                        or snap.preco_formatado
+                        or "-"
+                    %}
+
+                    {% set subtotal =
+                        item.subtotal_formatado
+                        or item.valor_total_formatado
+                        or "-"
+                    %}
+
+                    <tr>
+                        <td>{{ produto_nome }}</td>
+                        <td>{{ produto_descricao }}</td>
+                        <td>{{ item.quantidade or 0 }}</td>
+                        <td>{{ preco_unitario }}</td>
+                        <td>{{ subtotal }}</td>
+                        <td>{{ item.observacao or "-" }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">Nenhum item encontrado.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if pedido.fechado_em_caixa %}
+    <div class="card">
+        <div class="header-actions">
+            <h3>Alterar Status</h3>
+        </div>
+
+        <div class="alert alert-info">
+            O status não pode ser alterado porque este pedido já está vinculado a um fechamento de caixa.
+        </div>
+    </div>
+{% elif proximos_status %}
+    <div class="card">
+        <div class="header-actions">
+            <h3>Alterar Status</h3>
+        </div>
+
+        <form method="POST" action="{{ url_for('pedidos_admin.alterar_status', pedido_id=pedido.id) }}">
+            <div class="form-group">
+                <label>Novo Status</label>
+                <select name="novo_status" required>
+                    <option value="">Selecione</option>
+                    {% for status in proximos_status %}
+                        <option value="{{ status }}">{{ status.replace('_', ' ').title() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filtros-acoes">
+                <button type="submit">Salvar Status</button>
+            </div>
+        </form>
+    </div>
+{% endif %}
+
+{% if pedido.motivo_cancelamento %}
+<div class="card">
+    <h3>Cancelamento</h3>
+    <p><strong>Motivo:</strong> {{ pedido.motivo_cancelamento }}</p>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="header-actions">
+        <h3>Histórico do Pedido</h3>
+    </div>
+
+    <div class="table-responsive">
+        <table class="historico-tabela">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Usuário</th>
+                    <th>Origem</th>
+                    <th>Alteração</th>
+                    <th>Motivo</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for evento in pedido.historico %}
+                    <tr>
+                        <td>{{ evento.criado_em | datetime_br }}</td>
+
+                        <td>
+                            <span class="historico-tipo">
+                                {{ evento.tipo or "-" }}
+                            </span>
+                        </td>
+
+                        <td class="historico-descricao">
+                            {{ evento.descricao or "-" }}
+                        </td>
+
+                        <td>{{ evento.usuario_nome or "-" }}</td>
+
+                        <td>
+                            <span class="historico-origem">
+                                {{ evento.usuario_tipo or "-" }}
+                            </span>
+                        </td>
+
+                        <td class="historico-status">
+                            {% if evento.status_anterior or evento.status_novo %}
+                                {{ evento.status_anterior or "-" }} → {{ evento.status_novo or "-" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if evento.motivo %}
+                                {{ evento.motivo }}
+                            {% else %}
+                                <span class="historico-motivo-vazio">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7">Nenhum histórico encontrado.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

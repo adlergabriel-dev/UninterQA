@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 text-center">
+
+    <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+        <div class="card-body py-5">
+
+            <h1 class="fw-bold text-success mb-3">Pedido realizado!</h1>
+
+            <p class="text-muted fs-5">
+                Seu pedido foi enviado para preparo.
+            </p>
+
+            <h2 class="fw-bold my-4">
+                Código: {{ codigo }}
+            </h2>
+
+            <p class="text-muted">
+                Aguarde a chamada no balcão.
+            </p>
+
+            <a href="{{ url_for('pedido_totem.inicio') }}" class="btn btn-primary btn-lg mt-3">
+                Novo Pedido
+            </a>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

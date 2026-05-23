@@ -1,0 +1,182 @@
+{% extends "cliente/base_cliente.html" %}
+
+{% block cliente_content %}
+<div class="cliente-box">
+    <div class="header-actions">
+        <h2>Detalhe do Pedido</h2>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a class="btn btn-secondary" href="{{ url_for('cliente_pedido.meus_pedidos') }}">Voltar</a>
+
+            {% if pedido.pode_cancelar %}
+            <form method="POST" action="{{ url_for('cliente_pedido.cancelar_pedido', pedido_id=pedido.id) }}" onsubmit="return confirm('Deseja realmente cancelar este pedido?');">
+                <button type="submit" class="btn">Cancelar Pedido</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="cliente-card-info" style="margin-bottom: 18px;">
+        <h3>{{ pedido.status_cliente_descricao }}</h3>
+        <p>{{ pedido.status_cliente_mensagem }}</p>
+
+        <div class="pedido-progresso pedido-progresso-detalhe">
+            <div class="pedido-progresso-item {% if pedido.status_cliente_etapa >= 1 %}ativo{% endif %}">
+                <span>1</span>
+                <small>Aguardando pagamento</small>
+            </div>
+
+            <div class="pedido-progresso-item {% if pedido.status_cliente_etapa >= 2 %}ativo{% endif %}">
+                <span>2</span>
+                <small>Confirmado</small>
+            </div>
+
+            <div class="pedido-progresso-item {% if pedido.status_cliente_etapa >= 3 %}ativo{% endif %}">
+                <span>3</span>
+                <small>Em preparo</small>
+            </div>
+
+            <div class="pedido-progresso-item {% if pedido.status_cliente_etapa >= 4 %}ativo{% endif %}">
+                <span>4</span>
+                <small>Saiu para entrega</small>
+            </div>
+
+            <div class="pedido-progresso-item {% if pedido.status_cliente_etapa >= 5 %}ativo{% endif %}">
+                <span>5</span>
+                <small>Finalizado</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="detalhe-pedido-topo">
+        <div class="detalhe-pedido-card">
+            <h4>Pedido</h4>
+            <p><strong>Código:</strong> {{ pedido.codigo_pedido }}</p>
+            <p><strong>Filial:</strong> {{ pedido.unidade_nome }}</p>
+            <p><strong>Origem:</strong> {{ pedido.origem }}</p>
+        </div>
+
+        <div class="detalhe-pedido-card">
+            <h4>Status</h4>
+            <p>
+                <strong>Pedido:</strong><br>
+                <span class="badge-status badge-status-{{ pedido.status_cliente_codigo }}">
+                    {{ pedido.status_cliente_descricao }}
+                </span>
+            </p>
+
+            <p>
+                <strong>Pagamento:</strong><br>
+                <span class="badge-pagamento badge-pagamento-{{ (pedido.pagamento_status or '')|lower }}">
+                    {{ pedido.pagamento_status_descricao or pedido.pagamento_status or "-" }}
+                </span>
+            </p>
+        </div>
+
+        <div class="detalhe-pedido-card">
+            <h4>Pagamento</h4>
+            <p><strong>Forma:</strong> {{ pedido.pagamento_metodo_descricao or pedido.pagamento_metodo or "-" }}</p>
+            <p><strong>Valor:</strong> {{ pedido.pagamento_valor_formatado or pedido.valor_total_formatado }}</p>
+            <p><strong>Pago em:</strong> {{ pedido.pago_em | datetime_br }}</p>
+        </div>
+
+        <div class="detalhe-pedido-card">
+            <h4>Resumo</h4>
+            <p><strong>Itens:</strong> {{ pedido.quantidade_total_itens or pedido.quantidade_itens }}</p>
+            <p><strong>Total:</strong> {{ pedido.valor_total_formatado }}</p>
+            <p><strong>Criado em:</strong> {{ pedido.criado_em | datetime_br }}</p>
+            <p><strong>Atualizado em:</strong> {{ pedido.atualizado_em | datetime_br }}</p>
+        </div>
+    </div>
+</div>
+
+{% if pedido.status == "CANCELADO" %}
+<div class="cliente-box">
+    <h3>Informações do cancelamento</h3>
+    <div class="cliente-grid">
+        <div class="cliente-card-info">
+            <p><strong>Cancelado em:</strong> {{ pedido.cancelado_em | datetime_br }}</p>
+            <p><strong>Motivo:</strong> {{ pedido.motivo_cancelamento or "-" }}</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="cliente-box">
+    <h3>Itens do Pedido</h3>
+
+    <div class="cliente-grid">
+        {% for item in pedido.itens %}
+            {% set snap = item.snapshot_produto or {} %}
+
+            {% set produto_nome =
+                item.produto_nome
+                or item.nome
+                or snap.produto_nome
+                or snap.nome
+                or "-"
+            %}
+
+            {% set produto_descricao =
+                item.produto_descricao
+                or item.descricao
+                or snap.produto_descricao
+                or snap.descricao
+                or "-"
+            %}
+
+            {% set imagem_url =
+                snap.imagem_url
+                or item.imagem_url
+            %}
+
+            <div class="cliente-card-info">
+                {% if imagem_url %}
+                    <div style="margin-bottom: 12px;">
+                        <img
+                            src="{{ imagem_url }}"
+                            alt="{{ produto_nome }}"
+                            class="detalhe-pedido-imagem"
+                        >
+                    </div>
+                {% endif %}
+
+                <p><strong>Produto:</strong> {{ produto_nome }}</p>
+                <p><strong>Descrição:</strong> {{ produto_descricao }}</p>
+                <p><strong>Quantidade:</strong> {{ item.quantidade }}</p>
+                <p><strong>Preço unitário:</strong> {{ item.preco_unitario_formatado }}</p>
+                <p><strong>Subtotal:</strong> {{ item.subtotal_formatado }}</p>
+
+                {% if item.observacao %}
+                    <p><strong>Observação:</strong> {{ item.observacao }}</p>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="cliente-card-info" style="grid-column: 1 / -1;">
+                <p>Nenhum item encontrado neste pedido.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="cliente-box">
+    <h3>Acompanhamento do Pedido</h3>
+
+    <div class="cliente-timeline">
+        {% for evento in pedido.historico_cliente %}
+            <div class="cliente-timeline-item">
+                <div class="cliente-timeline-ponto"></div>
+
+                <div class="cliente-timeline-conteudo">
+                    <h4>{{ evento.titulo }}</h4>
+                    <p>{{ evento.descricao }}</p>
+                    <span>{{ evento.data | datetime_br }}</span>
+                </div>
+            </div>
+        {% else %}
+            <div class="cliente-card-info">
+                <p>Nenhuma atualização disponível para este pedido.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

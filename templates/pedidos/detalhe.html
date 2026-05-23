@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% set perfil = session.get('usuario', {}).get('perfil', '').upper() %}
+
+<div class="card">
+    <div class="header-actions">
+        <h2>Detalhe do Pedido</h2>
+        <a class="btn btn-secondary" href="{{ url_for('pedidos.lista') }}">Voltar</a>
+    </div>
+
+    <div class="filtros-grid">
+        <div>
+            <p><strong>Código:</strong> {{ pedido.codigo_pedido or "-" }}</p>
+            <p><strong>Cliente:</strong> {{ pedido.cliente_nome or "-" }}</p>
+            <p><strong>Unidade:</strong> {{ pedido.unidade_nome or "-" }}</p>
+            <p><strong>Observação:</strong> {{ pedido.observacao or "-" }}</p>
+        </div>
+
+        <div>
+            <p>
+                <strong>Status:</strong>
+                {% if pedido.status == 'AGUARDANDO_PAGAMENTO' %}
+                    <span class="badge badge-warning">Aguardando Pagamento</span>
+                {% elif pedido.status == 'PAGO' %}
+                    <span class="badge badge-info">Pago</span>
+                {% elif pedido.status == 'EM_PREPARO' %}
+                    <span class="badge badge-info">Em Preparo</span>
+                {% elif pedido.status == 'PRONTO_PARA_RETIRADA' %}
+                    <span class="badge badge-info">Pronto para Retirada</span>
+                {% elif pedido.status == 'SAIU_PARA_ENTREGA' %}
+                    <span class="badge badge-info">Saiu para Entrega</span>
+                {% elif pedido.status == 'CONCLUIDO' %}
+                    <span class="badge badge-success">Concluído</span>
+                {% elif pedido.status == 'CANCELADO' %}
+                    <span class="badge badge-inativo">Cancelado</span>
+                {% else %}
+                    <span class="badge badge-dark">{{ pedido.status or "-" }}</span>
+                {% endif %}
+            </p>
+
+            <p>
+                <strong>Pagamento:</strong>
+                {% if pedido.pagamento_status == 'PENDENTE' %}
+                    <span class="badge badge-warning">Pendente</span>
+                {% elif pedido.pagamento_status == 'APROVADO' %}
+                    <span class="badge badge-success">Aprovado</span>
+                {% elif pedido.pagamento_status == 'RECUSADO' %}
+                    <span class="badge badge-inativo">Recusado</span>
+                {% elif pedido.pagamento_status == 'EXPIRADO' %}
+                    <span class="badge badge-dark">Expirado</span>
+                {% else %}
+                    <span class="badge badge-dark">{{ pedido.pagamento_status or "-" }}</span>
+                {% endif %}
+            </p>
+
+            <p><strong>Subtotal:</strong> R$ {{ "%.2f"|format(pedido.valor_subtotal or 0) }}</p>
+            <p><strong>Total:</strong> R$ {{ "%.2f"|format(pedido.valor_total or 0) }}</p>
+            <p><strong>Criado em:</strong> {{ pedido.criado_em | datetime_br }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Simular Pagamento</h3>
+
+    {% if perfil in ['ADMIN', 'GERENTE'] %}
+        {% if pedido.status not in ['CONCLUIDO', 'CANCELADO'] and pedido.pagamento_status != 'APROVADO' %}
+        <form method="POST" action="{{ url_for('pedidos.simular_pagamento', pedido_id=pedido.id) }}">
+            <div class="form-group">
+                <label>Resultado da Simulação</label>
+                <select name="resultado_pagamento" required>
+                    <option value="">Selecione</option>
+                    <option value="APROVADO">APROVADO</option>
+                    <option value="RECUSADO">RECUSADO</option>
+                    <option value="PENDENTE">PENDENTE</option>
+                    <option value="EXPIRADO">EXPIRADO</option>
+                </select>
+            </div>
+
+            <button type="submit">Simular Pagamento</button>
+        </form>
+        {% else %}
+            <p>Este pedido não permite mais simulação de pagamento.</p>
+        {% endif %}
+    {% else %}
+        <p>Seu perfil possui acesso somente para visualização desta seção.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Alterar Status</h3>
+
+    {% if perfil in ['ADMIN', 'GERENTE'] %}
+        {% if proximos_status %}
+        <form method="POST" action="{{ url_for('pedidos.alterar_status', pedido_id=pedido.id) }}">
+            <div class="form-group">
+                <label>Novo Status</label>
+                <select name="novo_status" required>
+                    <option value="">Selecione</option>
+                    {% for status in proximos_status %}
+                        <option value="{{ status }}">{{ status }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Observação da alteração</label>
+                <input type="text" name="observacao_status">
+            </div>
+
+            <button type="submit">Atualizar Status</button>
+        </form>
+        {% else %}
+            <p>Este pedido não possui mais transições disponíveis.</p>
+        {% endif %}
+    {% else %}
+        <p>Seu perfil possui acesso somente para visualização desta seção.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Itens</h3>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Imagem</th>
+                    <th>Produto</th>
+                    <th>Preço Unitário</th>
+                    <th>Quantidade</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr>
+                    <td>
+                        {% if item.imagem_url_snapshot %}
+                            <img src="{{ item.imagem_url_snapshot }}" alt="{{ item.nome_produto_snapshot }}" class="miniatura-produto">
+                        {% else %}
+                            <span>-</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.nome_produto_snapshot or "-" }}</td>
+                    <td>R$ {{ "%.2f"|format(item.preco_unitario or 0) }}</td>
+                    <td>{{ item.quantidade or 0 }}</td>
+                    <td>R$ {{ "%.2f"|format(item.subtotal or 0) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">Nenhum item encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Pagamentos</h3>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Método</th>
+                    <th>Status</th>
+                    <th>Valor</th>
+                    <th>Transação</th>
+                    <th>Criado em</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pagamentos %}
+                <tr>
+                    <td>{{ item.metodo or "-" }}</td>
+                    <td>
+                        {% if item.status == 'PENDENTE' %}
+                            <span class="badge badge-warning">Pendente</span>
+                        {% elif item.status == 'APROVADO' %}
+                            <span class="badge badge-success">Aprovado</span>
+                        {% elif item.status == 'RECUSADO' %}
+                            <span class="badge badge-inativo">Recusado</span>
+                        {% elif item.status == 'EXPIRADO' %}
+                            <span class="badge badge-dark">Expirado</span>
+                        {% else %}
+                            <span class="badge badge-dark">{{ item.status or "-" }}</span>
+                        {% endif %}
+                    </td>
+                    <td>R$ {{ "%.2f"|format(item.valor or 0) }}</td>
+                    <td>{{ item.transacao_id or "-" }}</td>
+                    <td>{{ item.criado_em | datetime_br }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">Nenhum pagamento encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Histórico de Status</h3>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Status Anterior</th>
+                    <th>Status Novo</th>
+                    <th>Origem</th>
+                    <th>Observação</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in historico %}
+                <tr>
+                    <td>{{ item.status_anterior or "-" }}</td>
+                    <td>{{ item.status_novo or "-" }}</td>
+                    <td>{{ item.origem or "-" }}</td>
+                    <td>{{ item.observacao or "-" }}</td>
+                    <td>{{ item.data_evento | datetime_br }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">Nenhum histórico encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

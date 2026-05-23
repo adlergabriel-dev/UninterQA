@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="header-actions" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div>
+            <h2 style="margin:0;">Dashboard do Balcão</h2>
+            <p style="margin:6px 0 0 0;color:#666;">Resumo operacional do dia {{ indicadores.data_referencia }}.</p>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <a class="btn btn-secondary" href="{{ url_for('pedido_balcao.lista') }}">Ver Pedidos</a>
+            <a class="btn btn-primary" href="{{ url_for('pedido_balcao.novo') }}">Novo Pedido</a>
+        </div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:16px;">
+    <div class="card">
+        <h3 style="margin-top:0;">Pedidos do Dia</h3>
+        <p style="font-size:28px;font-weight:bold;margin:0;">{{ indicadores.quantidade_pedidos_dia }}</p>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0;">Total Vendido</h3>
+        <p style="font-size:28px;font-weight:bold;margin:0;">R$ {{ '%.2f'|format((indicadores.total_vendido_dia or 0)|float) }}</p>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0;">Total Pago</h3>
+        <p style="font-size:28px;font-weight:bold;margin:0;">R$ {{ '%.2f'|format((indicadores.total_pago_dia or 0)|float) }}</p>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0;">Total Pendente</h3>
+        <p style="font-size:28px;font-weight:bold;margin:0;">R$ {{ '%.2f'|format((indicadores.total_pendente_dia or 0)|float) }}</p>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:16px;">
+    <div class="card">
+        <h3 style="margin-top:0;">Criado</h3>
+        <p style="font-size:24px;font-weight:bold;margin:0;">{{ indicadores.status_criado }}</p>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0;">Em Preparo</h3>
+        <p style="font-size:24px;font-weight:bold;margin:0;">{{ indicadores.status_em_preparo }}</p>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0;">Pronto</h3>
+        <p style="font-size:24px;font-weight:bold;margin:0;">{{ indicadores.status_pronto }}</p>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0;">Finalizado</h3>
+        <p style="font-size:24px;font-weight:bold;margin:0;">{{ indicadores.status_finalizado }}</p>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0;">Cancelado</h3>
+        <p style="font-size:24px;font-weight:bold;margin:0;">{{ indicadores.status_cancelado }}</p>
+    </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+    <h3 style="margin-top:0;">Últimos Pedidos do Dia</h3>
+
+    {% if indicadores.ultimos_pedidos %}
+    <div style="overflow-x:auto;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Cliente</th>
+                    <th>Pagamento</th>
+                    <th>Situação</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Criado em</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in indicadores.ultimos_pedidos %}
+                <tr>
+                    <td>{{ pedido.codigo_pedido or "-" }}</td>
+                    <td>{{ pedido.cliente_nome or "-" }}</td>
+                    <td>{{ (pedido.forma_pagamento or "-").replace('_', ' ') }}</td>
+                    <td>{{ (pedido.situacao_pagamento or 'PENDENTE').replace('_', ' ') }}</td>
+                    <td>R$ {{ '%.2f'|format((pedido.total or 0)|float) }}</td>
+                    <td>{{ (pedido.status or '-').replace('_', ' ') }}</td>
+                    <td>{{ pedido.criado_em_texto or '-' }}</td>
+                    <td>
+                        <a class="btn btn-secondary btn-sm" href="{{ url_for('pedido_balcao.detalhe', pedido_id=pedido.id) }}">
+                            Ver detalhe
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>Nenhum pedido registrado hoje.</p>
+    {% endif %}
+</div>
+{% endblock %}

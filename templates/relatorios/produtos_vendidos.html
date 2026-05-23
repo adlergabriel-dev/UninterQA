@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/produtos_vendidos.css') }}">
+
+<div class="card produtos-vendidos-page">
+
+    <div class="produtos-vendidos-header">
+        <div>
+            <h2>Produtos Mais Vendidos</h2>
+            <p class="produtos-vendidos-subtitulo">
+                Ranking de produtos vendidos no balcão e web por período, origem e filial.
+            </p>
+        </div>
+
+        <div class="produtos-vendidos-acoes">
+            <a class="btn btn-secondary" href="{{ url_for('relatorios.index') }}">
+                Voltar
+            </a>
+
+            <a class="btn btn-success"
+               href="{{ url_for('relatorio_produtos_vendidos.exportar_excel',
+                    data_inicio=filtros.data_inicio,
+                    data_fim=filtros.data_fim,
+                    unidade_id=filtros.unidade_id,
+                    produto=filtros.produto,
+                    origem=filtros.origem,
+                    ignorar_cancelados='1' if filtros.ignorar_cancelados else '0'
+               ) }}">
+                Exportar Excel
+            </a>
+        </div>
+    </div>
+
+    <form method="GET">
+        <div class="filtros-produtos-vendidos">
+
+            <div>
+                <label>Data Inicial</label>
+                <input type="date" name="data_inicio" value="{{ filtros.data_inicio }}">
+            </div>
+
+            <div>
+                <label>Data Final</label>
+                <input type="date" name="data_fim" value="{{ filtros.data_fim }}">
+            </div>
+
+            <div>
+                <label>Filial</label>
+                <select name="unidade_id">
+                    <option value="">Todas</option>
+                    {% for unidade in unidades %}
+                        <option value="{{ unidade.id }}"
+                            {% if filtros.unidade_id == unidade.id %}selected{% endif %}>
+                            {{ unidade.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Origem</label>
+                <select name="origem">
+                    <option value="">Todas</option>
+                    <option value="BALCAO" {% if filtros.origem == "BALCAO" %}selected{% endif %}>
+                        Balcão
+                    </option>
+                    <option value="CLIENTE_WEB" {% if filtros.origem == "CLIENTE_WEB" %}selected{% endif %}>
+                        Cliente Web
+                    </option>
+                </select>
+            </div>
+
+            <div>
+                <label>Produto</label>
+                <input type="text" name="produto" value="{{ filtros.produto }}" placeholder="Buscar por produto">
+            </div>
+
+            <div class="campo-checkbox">
+                <label>&nbsp;</label>
+                <label class="checkbox-linha">
+                    <input type="checkbox" name="ignorar_cancelados" value="1"
+                        {% if filtros.ignorar_cancelados %}checked{% endif %}>
+                    Ignorar cancelados
+                </label>
+            </div>
+
+        </div>
+
+        <div class="acoes-filtro">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('relatorio_produtos_vendidos.index') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+
+    <div class="cards-resumo">
+
+        <div class="card-resumo">
+            <div class="titulo">Produtos Diferentes</div>
+            <div class="valor">{{ totais.total_produtos_diferentes }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Quantidade Vendida</div>
+            <div class="valor">{{ totais.total_quantidade }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Valor Vendido</div>
+            <div class="valor">{{ totais.total_vendido|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Lançamentos</div>
+            <div class="valor">{{ totais.total_lancamentos }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Valor Médio por Unidade</div>
+            <div class="valor">{{ totais.ticket_medio_produto|moeda }}</div>
+        </div>
+
+    </div>
+
+    <div class="resumos-grid">
+
+        <div class="mini-resumo">
+            <h4>Resumo por Origem</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Origem</th>
+                        <th>Produtos</th>
+                        <th>Qtd</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nome, item in totais.resumo_por_origem.items() %}
+                        <tr>
+                            <td>{{ nome }}</td>
+                            <td>{{ item.produtos_diferentes }}</td>
+                            <td>{{ item.quantidade }}</td>
+                            <td>{{ item.valor_total|moeda }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4">Sem dados</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mini-resumo">
+            <h4>Resumo por Filial</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Filial</th>
+                        <th>Produtos</th>
+                        <th>Qtd</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nome, item in totais.resumo_por_filial.items() %}
+                        <tr>
+                            <td>{{ nome }}</td>
+                            <td>{{ item.produtos_diferentes }}</td>
+                            <td>{{ item.quantidade }}</td>
+                            <td>{{ item.valor_total|moeda }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4">Sem dados</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="tabela-container">
+        <table class="tabela-produtos-vendidos">
+            <thead>
+                <tr>
+                    <th>Ranking</th>
+                    <th>Produto</th>
+                    <th>Origem</th>
+                    <th>Filial</th>
+                    <th>Quantidade</th>
+                    <th>Pedidos</th>
+                    <th>Valor Médio</th>
+                    <th>Valor Total</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in linhas %}
+                    <tr>
+                        <td>#{{ loop.index }}</td>
+                        <td>{{ item.produto_nome }}</td>
+                        <td>{{ item.origem_formatada }}</td>
+                        <td>{{ item.unidade_nome }}</td>
+                        <td>{{ item.quantidade }}</td>
+                        <td>{{ item.pedidos }}</td>
+                        <td>{{ item.valor_unitario_medio|moeda }}</td>
+                        <td><strong>{{ item.valor_total|moeda }}</strong></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="texto-vazio">
+                            Nenhum produto vendido encontrado para os filtros informados.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+    <div class="secao-detalhes">
+        <h3>Detalhamento dos Itens</h3>
+
+        <div class="tabela-container">
+            <table class="tabela-produtos-vendidos">
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Data</th>
+                        <th>Origem</th>
+                        <th>Cliente</th>
+                        <th>Filial</th>
+                        <th>Produto</th>
+                        <th>Quantidade</th>
+                        <th>Valor Unitário</th>
+                        <th>Valor Total</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in linhas_detalhe %}
+                        <tr>
+                            <td>{{ item.codigo_pedido }}</td>
+                            <td>{{ item.data_formatada }}</td>
+                            <td>{{ item.origem_formatada }}</td>
+                            <td>{{ item.cliente_nome }}</td>
+                            <td>{{ item.unidade_nome }}</td>
+                            <td>{{ item.produto_nome }}</td>
+                            <td>{{ item.quantidade }}</td>
+                            <td>{{ item.valor_unitario|moeda }}</td>
+                            <td><strong>{{ item.valor_total|moeda }}</strong></td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="texto-vazio">
+                                Nenhum item encontrado.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

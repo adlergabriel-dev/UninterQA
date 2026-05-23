@@ -1,0 +1,81 @@
+{% extends "cliente/base_cliente.html" %}
+
+{% block cliente_content %}
+<div class="cliente-box">
+    <div class="header-actions">
+        <h2>Cardápio</h2>
+    </div>
+
+    <form method="GET" class="cardapio-filtros">
+        <div class="form-group">
+            <label>Filial</label>
+            <select name="unidade_id">
+                <option value="">Selecione uma filial</option>
+                {% for unidade in unidades %}
+                    <option value="{{ unidade.id }}" {% if filtros.unidade_id == unidade.id %}selected{% endif %}>
+                        {{ unidade.nome }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Buscar produto</label>
+            <input type="text" name="termo" value="{{ filtros.termo }}" placeholder="Nome ou descrição">
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: end; gap: 10px; flex-wrap: wrap;">
+            <button type="submit">Filtrar</button>
+            <a class="btn btn-secondary" href="{{ url_for('cliente_cardapio.cardapio') }}">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="cliente-box">
+    <div class="header-actions">
+        <h2>Produtos disponíveis</h2>
+        <span>{{ itens|length }} item(ns)</span>
+    </div>
+
+    {% if not filtros.unidade_id %}
+        <div class="cliente-card-info">
+            <p>Selecione uma filial para visualizar os produtos disponíveis.</p>
+        </div>
+    {% else %}
+        <div class="cardapio-grid">
+            {% for item in itens %}
+                <div class="produto-card">
+                    <div class="produto-imagem">
+                        {% if item.imagem_url %}
+                            <img src="{{ item.imagem_url }}" alt="{{ item.produto_nome }}">
+                        {% else %}
+                            <div class="produto-imagem-sem-foto">Sem imagem</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="produto-conteudo">
+                        <h3 class="produto-titulo">{{ item.produto_nome }}</h3>
+                        <div class="produto-unidade">Filial: {{ item.unidade_nome }}</div>
+
+                        <div class="produto-descricao">
+                            {{ item.produto_descricao or "Produto sem descrição." }}
+                        </div>
+
+                        <div class="produto-preco">{{ item.preco_formatado }}</div>
+
+                        <div class="produto-acoes">
+                            <a class="btn btn-secondary" href="{{ url_for('cliente_pedido.novo_pedido', unidade_id=item.unidade_id) }}">
+                                Pedir
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="cliente-card-info" style="grid-column: 1 / -1;">
+                    <p>Nenhum item encontrado para os filtros informados.</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

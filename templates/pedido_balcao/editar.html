@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="header-actions" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <h2 style="margin:0;">Editar Pedido Balcão</h2>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <a class="btn btn-secondary" href="{{ url_for('pedido_balcao.detalhe', pedido_id=pedido.id) }}">Voltar</a>
+        </div>
+    </div>
+</div>
+
+<form method="POST" id="form-editar-pedido-balcao">
+    <input type="hidden" name="itens_json" id="itens_json">
+
+    <div class="card" style="margin-top:16px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
+            <div class="form-group">
+                <label>Filial</label>
+                <input type="text" value="{{ pedido.unidade_nome or '-' }}" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="cliente_id">Cliente</label>
+                <select name="cliente_id" id="cliente_id" required>
+                    <option value="">Selecione</option>
+                    {% for cliente in clientes %}
+                    <option value="{{ cliente.id }}" {% if pedido.cliente_id == cliente.id %}selected{% endif %}>
+                        {{ cliente.nome }}{% if cliente.telefone %} - {{ cliente.telefone }}{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="forma_pagamento">Forma de Pagamento</label>
+                <select name="forma_pagamento" id="forma_pagamento" required>
+                    <option value="">Selecione</option>
+                    {% for item in formas_pagamento %}
+                    <option value="{{ item }}" {% if pedido.forma_pagamento == item %}selected{% endif %}>
+                        {{ item.replace('_', ' ') }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="observacao">Observação</label>
+                <input type="text" name="observacao" id="observacao" value="{{ pedido.observacao or '' }}">
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+        <h3>Itens do Pedido</h3>
+        <div id="lista-itens-edicao"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+        <h3>Resumo do Pedido</h3>
+        <div style="overflow-x:auto;">
+            <table class="table" id="tabela-resumo">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qtd</th>
+                        <th>Valor Unitário</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="3" style="text-align:right;">Total</th>
+                        <th id="valor-total-geral">R$ 0,00</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        <a class="btn btn-secondary" href="{{ url_for('pedido_balcao.detalhe', pedido_id=pedido.id) }}">Cancelar</a>
+    </div>
+</form>
+
+<script>
+const itensJsonInput = document.getElementById("itens_json");
+const tabelaResumoBody = document.querySelector("#tabela-resumo tbody");
+const valorTotalGeral = document.getElementById("valor-total-geral");
+const listaItensEdicao = document.getElementById("lista-itens-edicao");
+
+let carrinho = {{ (pedido.itens or [])|tojson }};
+
+function formatarMoeda(valor) {
+    return Number(valor || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+}
+
+function atualizarResumo() {
+    if (!carrinho.length) {
+        tabelaResumoBody.innerHTML = `<tr><td colspan="4">Nenhum item adicionado.</td></tr>`;
+        valorTotalGeral.textContent = "R$ 0,00";
+        itensJsonInput.value = "[]";
+        return;
+    }
+
+    let html = "";
+    let total = 0;
+
+    carrinho.forEach(item => {
+        const totalItem = Number(item.quantidade) * Number(item.valor_unitario);
+        total += totalItem;
+
+        html += `
+            <tr>
+                <td>${item.nome}</td>
+                <td>${item.quantidade}</td>
+                <td>${formatarMoeda(item.valor_unitario)}</td>
+                <td>${formatarMoeda(totalItem)}</td>
+            </tr>
+        `;
+    });
+
+    tabelaResumoBody.innerHTML = html;
+    valorTotalGeral.textContent = formatarMoeda(total);
+    itensJsonInput.value = JSON.stringify(carrinho);
+}
+
+function renderizarItensEdicao() {
+    if (!carrinho.length) {
+        listaItensEdicao.innerHTML = "<p>Nenhum item no pedido.</p>";
+        atualizarResumo();
+        return;
+    }
+
+    let html = `
+        <div style="overflow-x:auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Valor</th>
+                        <th>Quantidade</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    carrinho.forEach((item, index) => {
+        html += `
+            <tr>
+                <td>${item.nome || "-"}</td>
+                <td>${formatarMoeda(item.valor_unitario || 0)}</td>
+                <td>
+                    <input type="number" min="0" value="${item.quantidade || 0}" onchange="alterarQuantidade(${index}, this.value)">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removerItem(${index})">Remover</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table></div>`;
+    listaItensEdicao.innerHTML = html;
+
+    atualizarResumo();
+}
+
+window.alterarQuantidade = function(index, quantidade) {
+    quantidade = Number(quantidade || 0);
+
+    if (quantidade <= 0) {
+        carrinho.splice(index, 1);
+    } else {
+        carrinho[index].quantidade = quantidade;
+        carrinho[index].valor_total = Number(carrinho[index].valor_unitario || 0) * quantidade;
+    }
+
+    renderizarItensEdicao();
+}
+
+window.removerItem = function(index) {
+    carrinho.splice(index, 1);
+    renderizarItensEdicao();
+}
+
+document.getElementById("form-editar-pedido-balcao").addEventListener("submit", function(e) {
+    if (!carrinho.length) {
+        e.preventDefault();
+        alert("O pedido precisa ter ao menos um item.");
+        return;
+    }
+
+    itensJsonInput.value = JSON.stringify(carrinho);
+});
+
+renderizarItensEdicao();
+</script>
+{% endblock %}

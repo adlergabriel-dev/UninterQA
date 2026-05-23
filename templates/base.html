@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title or "Raízes do Nordeste" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% set usuario = session.get('usuario', {}) %}
+    {% set perfil = usuario.get('perfil', '').upper() %}
+
+    <header class="topbar">
+        <div class="topbar-brand">
+            <img src="{{ url_for('static', filename='img/logo-raizes.png') }}" alt="Raízes do Nordeste" class="topbar-logo">
+            <div class="topbar-brand-textos">
+                <h1>Raízes do Nordeste</h1>
+                <span class="topbar-subtitle">Painel de Gestão</span>
+            </div>
+        </div>
+
+        {% if session.get('usuario') %}
+            <nav class="topbar-nav">
+                <a href="{{ url_for('home.index') }}">Home</a>
+
+                {% if perfil in ['ADMIN', 'GERENTE'] %}
+                    <a href="{{ url_for('unidades.lista') }}">Unidades</a>
+                    <a href="{{ url_for('produtos.lista') }}">Produtos</a>
+                    <a href="{{ url_for('cardapio.lista') }}">Cardápio</a>
+                {% endif %}
+
+                {% if perfil in ['ADMIN', 'GERENTE', 'USUARIO'] %}
+                    <a href="{{ url_for('clientes.lista') }}">Clientes</a>
+                    <a href="{{ url_for('pedidos_admin.lista') }}">Pedidos</a>
+                    <a href="{{ url_for('cozinha.index') }}">Cozinha</a>
+                    <a href="{{ url_for('retirada.index') }}">Retirada</a>
+                    <a href="{{ url_for('relatorios.index') }}">Relatórios</a>
+                    <a href="{{ url_for('pedido_balcao.dashboard') }}">Dashboard Balcão</a>
+                    <a href="{{ url_for('pedido_balcao.lista') }}">Pedido Balcão</a>
+                {% endif %}
+
+                {% if perfil == 'ADMIN' %}
+                    <a href="{{ url_for('auditoria.lista') }}">Auditoria</a>
+                    <a href="{{ url_for('usuarios.lista') }}">Usuários</a>
+                {% endif %}
+            </nav>
+
+            <div class="topbar-user-card">
+                <div class="topbar-user-info">
+                    <span class="topbar-user-nome">{{ usuario.get('nome', 'Usuário') }}</span>
+                    <span class="topbar-user-perfil">{{ perfil or 'SEM PERFIL' }}</span>
+                </div>
+                <a class="btn btn-secondary topbar-logout" href="{{ url_for('auth.logout') }}">Sair</a>
+            </div>
+        {% endif %}
+    </header>
+
+    <main class="page-wrap">
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-wrap">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</body>
+</html>

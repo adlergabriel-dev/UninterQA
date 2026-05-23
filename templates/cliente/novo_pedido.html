@@ -1,0 +1,108 @@
+{% extends "cliente/base_cliente.html" %}
+
+{% block cliente_content %}
+<div class="cliente-box">
+    <div class="header-actions">
+        <h2>Novo Pedido</h2>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a class="btn btn-secondary" href="{{ url_for('cliente_pedido.carrinho') }}">
+                Meu Carrinho
+                {% if carrinho and carrinho.quantidade_total_itens %}
+                    ({{ carrinho.quantidade_total_itens }})
+                {% endif %}
+            </a>
+
+            <a class="btn btn-secondary" href="{{ url_for('cliente_pedido.meus_pedidos') }}">
+                Meus Pedidos
+            </a>
+        </div>
+    </div>
+
+    <form method="GET">
+        <div class="cliente-grid">
+            <div class="form-group">
+                <label>Filial</label>
+                <select name="unidade_id" onchange="this.form.submit()">
+                    <option value="">Selecione uma filial</option>
+                    {% for unidade in unidades %}
+                        <option value="{{ unidade.id }}" {% if filtros.unidade_id == unidade.id %}selected{% endif %}>
+                            {{ unidade.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="cliente-box">
+    <div class="header-actions">
+        <h2>Itens disponíveis</h2>
+
+        <a class="btn btn-secondary" href="{{ url_for('cliente_pedido.carrinho') }}">
+            Ver Carrinho
+        </a>
+    </div>
+
+    {% if not filtros.unidade_id %}
+        <div class="cliente-card-info">
+            <p>Selecione uma filial para montar o pedido.</p>
+        </div>
+    {% else %}
+        <div class="pedido-grid">
+            {% for item in produtos %}
+                <div class="pedido-card">
+                    <form method="POST" action="{{ url_for('cliente_pedido.adicionar_carrinho') }}">
+                        <input type="hidden" name="unidade_id" value="{{ filtros.unidade_id }}">
+                        <input type="hidden" name="produto_id" value="{{ item.produto_id }}">
+
+                        <div class="pedido-card-imagem">
+                            {% if item.imagem_url %}
+                                <img src="{{ item.imagem_url }}" alt="{{ item.produto_nome }}">
+                            {% else %}
+                                <div>Sem imagem</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="pedido-card-body">
+                            <h3 class="pedido-card-titulo">{{ item.produto_nome }}</h3>
+                            <div>{{ item.produto_descricao or "Produto sem descrição." }}</div>
+                            <div><strong>Filial:</strong> {{ item.unidade_nome }}</div>
+                            <div class="pedido-card-preco">{{ item.preco_formatado }}</div>
+
+                            <div class="form-group">
+                                <label>Quantidade</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    name="quantidade"
+                                    value="1"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label>Observação do item</label>
+                                <input
+                                    type="text"
+                                    name="observacao"
+                                    placeholder="Ex.: sem cebola"
+                                >
+                            </div>
+
+                            <button type="submit">
+                                Adicionar ao Carrinho
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            {% else %}
+                <div class="cliente-card-info" style="grid-column: 1 / -1;">
+                    <p>Nenhum produto disponível para esta filial.</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

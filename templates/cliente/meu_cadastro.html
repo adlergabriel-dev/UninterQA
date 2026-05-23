@@ -1,0 +1,54 @@
+{% extends "cliente/base_cliente.html" %}
+
+{% block cliente_content %}
+<div class="cliente-box">
+    <div class="header-actions">
+        <h2>Meu Cadastro</h2>
+        <a class="btn btn-secondary" href="{{ url_for('cliente_auth.home') }}">Voltar</a>
+    </div>
+
+    <form method="POST">
+        <div class="cliente-grid">
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" name="nome" value="{{ cliente.nome or '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Telefone</label>
+                <input type="text" name="telefone" value="{{ cliente.telefone or '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" name="email" value="{{ cliente.email or '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>CPF</label>
+                <input type="text" name="cpf" value="{{ cliente.cpf or '' }}">
+            </div>
+        </div>
+
+        <div class="cliente-acoes">
+            <button type="submit">Salvar Alterações</button>
+            <a class="btn btn-secondary" href="{{ url_for('cliente_auth.home') }}">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<div class="cliente-box">
+    <h3>Informações da Conta</h3>
+    <div class="cliente-grid">
+        <div class="cliente-card-info">
+            <p><strong>Status:</strong> {{ "Ativo" if cliente.ativo else "Inativo" }}</p>
+            <p><strong>Origem:</strong> {{ cliente.origem or "-" }}</p>
+        </div>
+
+        <div class="cliente-card-info">
+            <p><strong>Criado em:</strong> {{ cliente.criado_em or "-" }}</p>
+            <p><strong>Atualizado em:</strong> {{ cliente.atualizado_em or "-" }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

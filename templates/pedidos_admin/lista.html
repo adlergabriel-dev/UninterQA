@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="header-actions">
+        <h2>Gestão de Pedidos</h2>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <h3>Total de Pedidos</h3>
+            <div class="valor">{{ dashboard.total_pedidos }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Abertos</h3>
+            <div class="valor">{{ dashboard.abertos }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Em Preparo</h3>
+            <div class="valor">{{ dashboard.em_preparo }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Enviados</h3>
+            <div class="valor">{{ dashboard.enviados }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Entregues</h3>
+            <div class="valor">{{ dashboard.entregues }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Cancelados</h3>
+            <div class="valor">{{ dashboard.cancelados }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Valor Total</h3>
+            <div class="valor">{{ dashboard.valor_total_formatado }}</div>
+        </div>
+    </div>
+
+    <form method="GET" class="card">
+        <div class="filtros-grid">
+            <div class="form-group">
+                <label>Código do Pedido</label>
+                <input type="text" name="codigo_pedido" value="{{ filtros.codigo_pedido }}">
+            </div>
+
+            <div class="form-group">
+                <label>Cliente</label>
+                <input type="text" name="cliente_nome" value="{{ filtros.cliente_nome }}">
+            </div>
+
+            <div class="form-group">
+                <label>Unidade</label>
+                <select name="unidade_id">
+                    <option value="">Todas</option>
+                    {% for unidade in unidades %}
+                        <option value="{{ unidade.id }}" {% if filtros.unidade_id == unidade.id %}selected{% endif %}>
+                            {{ unidade.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status">
+                    <option value="">Todos</option>
+                    {% for item in status_opcoes %}
+                        <option value="{{ item }}" {% if filtros.status == item %}selected{% endif %}>
+                            {{ item.replace('_', ' ').title() }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Origem</label>
+                <select name="origem">
+                    <option value="">Todas</option>
+                    {% for item in origem_opcoes %}
+                        <option value="{{ item }}" {% if filtros.origem == item %}selected{% endif %}>
+                            {{ item }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="filtros-acoes">
+            <button type="submit">Filtrar</button>
+            <a class="btn btn-secondary" href="{{ url_for('pedidos_admin.lista') }}">Limpar</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Cliente</th>
+                    <th>Unidade</th>
+                    <th>Status</th>
+                    <th>Origem</th>
+                    <th>Itens</th>
+                    <th>Total</th>
+                    <th>Criado em</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in pedidos %}
+                <tr>
+                    <td>{{ pedido.codigo_pedido }}</td>
+                    <td>{{ pedido.cliente_nome }}</td>
+                    <td>{{ pedido.unidade_nome }}</td>
+                    <td>
+                        <span class="{{ pedido.status_classe }}">
+                            {{ pedido.status_descricao }}
+                        </span>
+                    </td>
+                    <td>{{ pedido.origem or "-" }}</td>
+                    <td>{{ pedido.quantidade_itens }}</td>
+                    <td>{{ pedido.valor_total_formatado }}</td>
+                    <td>{{ pedido.criado_em | datetime_br }}</td>
+                    <td>
+                        <a href="{{ url_for('pedidos_admin.detalhe', pedido_id=pedido.id) }}">Detalhar</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9">Nenhum pedido encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

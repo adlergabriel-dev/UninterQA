@@ -1,0 +1,456 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_gerencial.css') }}">
+
+<div class="card dashboard-page">
+
+    <div class="dashboard-header">
+        <div>
+            <h2>Dashboard Gerencial</h2>
+            <p class="dashboard-subtitulo">
+                Visão consolidada dos pedidos balcão e web, caixa, produtos vendidos e operação em andamento.
+            </p>
+        </div>
+
+        <div class="dashboard-acoes">
+            <a class="btn btn-secondary" href="{{ url_for('relatorios.index') }}">
+                Voltar
+            </a>
+        </div>
+    </div>
+
+    <form method="GET">
+        <div class="filtros-dashboard">
+
+            <div>
+                <label>Data Inicial</label>
+                <input type="date" name="data_inicio" value="{{ filtros.data_inicio }}">
+            </div>
+
+            <div>
+                <label>Data Final</label>
+                <input type="date" name="data_fim" value="{{ filtros.data_fim }}">
+            </div>
+
+            <div>
+                <label>Filial</label>
+                <select name="unidade_id">
+                    <option value="">Todas</option>
+                    {% for unidade in unidades %}
+                        <option value="{{ unidade.id }}"
+                            {% if filtros.unidade_id == unidade.id %}selected{% endif %}>
+                            {{ unidade.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Origem</label>
+                <select name="origem">
+                    <option value="">Todas</option>
+                    <option value="BALCAO" {% if filtros.origem == "BALCAO" %}selected{% endif %}>
+                        Balcão
+                    </option>
+                    <option value="CLIENTE_WEB" {% if filtros.origem == "CLIENTE_WEB" %}selected{% endif %}>
+                        Cliente Web
+                    </option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="acoes-filtro">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('dashboard_gerencial.index') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+
+    <div class="dashboard-box">
+        <h3>Painel Operacional</h3>
+
+        <div class="cards-dashboard">
+
+            <div class="card-indicador">
+                <div class="titulo">Aguardando Pagamento</div>
+                <div class="valor valor-pendente">{{ operacional.aguardando_pagamento.quantidade }}</div>
+                <div class="subvalor">{{ operacional.aguardando_pagamento.valor_total|moeda }}</div>
+            </div>
+
+            <div class="card-indicador">
+                <div class="titulo">Pago / Aguardando Cozinha</div>
+                <div class="valor valor-pago">{{ operacional.pagos_aguardando_cozinha.quantidade }}</div>
+                <div class="subvalor">{{ operacional.pagos_aguardando_cozinha.valor_total|moeda }}</div>
+            </div>
+
+            <div class="card-indicador">
+                <div class="titulo">Em Preparo</div>
+                <div class="valor">{{ operacional.em_preparo.quantidade }}</div>
+                <div class="subvalor">{{ operacional.em_preparo.valor_total|moeda }}</div>
+            </div>
+
+            <div class="card-indicador">
+                <div class="titulo">Pronto para Retirada</div>
+                <div class="valor valor-pago">{{ operacional.prontos_retirada.quantidade }}</div>
+                <div class="subvalor">{{ operacional.prontos_retirada.valor_total|moeda }}</div>
+            </div>
+
+            <div class="card-indicador">
+                <div class="titulo">Finalizados</div>
+                <div class="valor">{{ operacional.finalizados.quantidade }}</div>
+                <div class="subvalor">{{ operacional.finalizados.valor_total|moeda }}</div>
+            </div>
+
+            <div class="card-indicador">
+                <div class="titulo">Cancelados</div>
+                <div class="valor valor-cancelado">{{ operacional.cancelados.quantidade }}</div>
+                <div class="subvalor">{{ operacional.cancelados.valor_total|moeda }}</div>
+            </div>
+
+        </div>
+
+        <div class="dashboard-acoes-operacionais">
+            <a class="btn btn-secondary" href="{{ url_for('pedidos_admin.lista') }}">Gestão de Pedidos</a>
+            <a class="btn btn-secondary" href="{{ url_for('cozinha.index') }}">Cozinha</a>
+            <a class="btn btn-secondary" href="{{ url_for('retirada.index') }}">Retirada</a>
+        </div>
+    </div>
+
+    <div class="dashboard-box">
+        <h3>Pedidos em Andamento</h3>
+
+        <div class="tabela-container">
+            <table class="tabela-dashboard">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Data</th>
+                        <th>Origem</th>
+                        <th>Cliente</th>
+                        <th>Status</th>
+                        <th>Pagamento</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pedidos_operacionais %}
+                        <tr>
+                            <td>{{ item.codigo_pedido }}</td>
+                            <td>{{ item.data_formatada }}</td>
+                            <td>{{ item.origem_formatada }}</td>
+                            <td>{{ item.cliente_nome }}</td>
+                            <td>
+                                <span class="badge-status">
+                                    {{ item.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-status
+                                    {% if item.situacao_pagamento in ['PAGO', 'APROVADO', 'CONFIRMADO'] %}badge-pago{% endif %}
+                                    {% if item.situacao_pagamento in ['PENDENTE', 'AGUARDANDO', 'AGUARDANDO_PAGAMENTO', 'EM_ABERTO', 'EM ABERTO'] %}badge-pendente{% endif %}
+                                    {% if item.situacao_pagamento in ['CANCELADO', 'ESTORNADO', 'RECUSADO'] %}badge-cancelado{% endif %}
+                                ">
+                                    {{ item.situacao_pagamento }}
+                                </span>
+                            </td>
+                            <td>{{ item.valor_total|moeda }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="texto-vazio">Nenhum pedido em andamento.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="cards-dashboard">
+
+        <div class="card-indicador">
+            <div class="titulo">Total de Pedidos</div>
+            <div class="valor">{{ totais.total_pedidos }}</div>
+        </div>
+
+        <div class="card-indicador">
+            <div class="titulo">Total Vendido</div>
+            <div class="valor">{{ totais.total_geral|moeda }}</div>
+        </div>
+
+        <div class="card-indicador">
+            <div class="titulo">Total Pago</div>
+            <div class="valor valor-pago">{{ totais.total_pago|moeda }}</div>
+        </div>
+
+        <div class="card-indicador">
+            <div class="titulo">Total Pendente</div>
+            <div class="valor valor-pendente">{{ totais.total_pendente|moeda }}</div>
+        </div>
+
+        <div class="card-indicador">
+            <div class="titulo">Total Cancelado</div>
+            <div class="valor valor-cancelado">{{ totais.total_cancelado|moeda }}</div>
+        </div>
+
+        <div class="card-indicador">
+            <div class="titulo">Ticket Médio</div>
+            <div class="valor">{{ totais.ticket_medio|moeda }}</div>
+        </div>
+
+        <div class="card-indicador">
+            <div class="titulo">Itens Vendidos</div>
+            <div class="valor">{{ totais.total_itens }}</div>
+        </div>
+
+        <div class="card-indicador">
+            <div class="titulo">Descontos</div>
+            <div class="valor">{{ totais.total_descontos|moeda }}</div>
+        </div>
+
+        <div class="card-indicador">
+            <div class="titulo">Entrega / Taxas</div>
+            <div class="valor">{{ totais.total_entregas|moeda }}</div>
+        </div>
+
+    </div>
+
+    <div class="dashboard-grid">
+
+        <div class="dashboard-box">
+            <h3>Resumo por Origem</h3>
+
+            <div class="tabela-container">
+                <table class="tabela-dashboard">
+                    <thead>
+                        <tr>
+                            <th>Origem</th>
+                            <th>Pedidos</th>
+                            <th>Total</th>
+                            <th>Pago</th>
+                            <th>Pendente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nome, item in resumo_por_origem.items() %}
+                            <tr>
+                                <td>{{ nome }}</td>
+                                <td>{{ item.quantidade }}</td>
+                                <td>{{ item.valor_total|moeda }}</td>
+                                <td>{{ item.valor_pago|moeda }}</td>
+                                <td>{{ item.valor_pendente|moeda }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="texto-vazio">Sem dados</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>Resumo por Filial</h3>
+
+            <div class="tabela-container">
+                <table class="tabela-dashboard">
+                    <thead>
+                        <tr>
+                            <th>Filial</th>
+                            <th>Pedidos</th>
+                            <th>Total</th>
+                            <th>Pago</th>
+                            <th>Pendente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nome, item in resumo_por_filial.items() %}
+                            <tr>
+                                <td>{{ nome }}</td>
+                                <td>{{ item.quantidade }}</td>
+                                <td>{{ item.valor_total|moeda }}</td>
+                                <td>{{ item.valor_pago|moeda }}</td>
+                                <td>{{ item.valor_pendente|moeda }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="texto-vazio">Sem dados</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>Resumo por Forma de Pagamento</h3>
+
+            <div class="tabela-container">
+                <table class="tabela-dashboard">
+                    <thead>
+                        <tr>
+                            <th>Forma</th>
+                            <th>Pedidos</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nome, item in resumo_por_forma.items() %}
+                            <tr>
+                                <td>{{ nome }}</td>
+                                <td>{{ item.quantidade }}</td>
+                                <td>{{ item.valor_total|moeda }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="3" class="texto-vazio">Sem dados</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>Resumo por Status</h3>
+
+            <div class="tabela-container">
+                <table class="tabela-dashboard">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Pedidos</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nome, item in resumo_por_status.items() %}
+                            <tr>
+                                <td>{{ nome }}</td>
+                                <td>{{ item.quantidade }}</td>
+                                <td>{{ item.valor_total|moeda }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="3" class="texto-vazio">Sem dados</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>Resumo por Situação do Pagamento</h3>
+
+            <div class="tabela-container">
+                <table class="tabela-dashboard">
+                    <thead>
+                        <tr>
+                            <th>Situação</th>
+                            <th>Pedidos</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nome, item in resumo_por_pagamento.items() %}
+                            <tr>
+                                <td>{{ nome }}</td>
+                                <td>{{ item.quantidade }}</td>
+                                <td>{{ item.valor_total|moeda }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="3" class="texto-vazio">Sem dados</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="dashboard-grid">
+
+        <div class="dashboard-box">
+            <h3>Top 10 Produtos Mais Vendidos</h3>
+
+            <div class="tabela-container">
+                <table class="tabela-dashboard">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Produto</th>
+                            <th>Qtd</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in produtos_mais_vendidos %}
+                            <tr>
+                                <td>#{{ loop.index }}</td>
+                                <td>{{ item.produto_nome }}</td>
+                                <td>{{ item.quantidade }}</td>
+                                <td>{{ item.valor_total|moeda }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="texto-vazio">Sem dados</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="dashboard-box">
+            <h3>Últimos 10 Pedidos</h3>
+
+            <div class="tabela-container">
+                <table class="tabela-dashboard">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Data</th>
+                            <th>Origem</th>
+                            <th>Cliente</th>
+                            <th>Total</th>
+                            <th>Pagamento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in ultimos_pedidos %}
+                            <tr>
+                                <td>{{ item.codigo_pedido }}</td>
+                                <td>{{ item.data_formatada }}</td>
+                                <td>{{ item.origem_formatada }}</td>
+                                <td>{{ item.cliente_nome }}</td>
+                                <td>{{ item.valor_total|moeda }}</td>
+                                <td>
+                                    <span class="badge-status
+                                        {% if item.situacao_pagamento in ['PAGO', 'APROVADO', 'CONFIRMADO'] %}badge-pago{% endif %}
+                                        {% if item.situacao_pagamento in ['PENDENTE', 'AGUARDANDO', 'AGUARDANDO_PAGAMENTO', 'EM_ABERTO', 'EM ABERTO'] %}badge-pendente{% endif %}
+                                        {% if item.situacao_pagamento in ['CANCELADO', 'ESTORNADO', 'RECUSADO'] %}badge-cancelado{% endif %}
+                                    ">
+                                        {{ item.situacao_pagamento }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="texto-vazio">Sem dados</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

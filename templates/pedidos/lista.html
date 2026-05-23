@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% set perfil = session.get('usuario', {}).get('perfil', '').upper() %}
+
+<div class="card">
+    <div class="header-actions">
+        <h2>Pedidos</h2>
+
+        {% if perfil in ['ADMIN', 'GERENTE', 'USUARIO'] %}
+            <a class="btn" href="{{ url_for('pedidos.novo') }}">Novo Pedido</a>
+        {% endif %}
+    </div>
+
+    <form method="GET" class="card">
+        <div class="filtros-grid">
+            <div class="form-group">
+                <label>Código</label>
+                <input type="text" name="codigo" value="{{ filtros.codigo }}">
+            </div>
+
+            <div class="form-group">
+                <label>Cliente</label>
+                <input type="text" name="cliente" value="{{ filtros.cliente }}">
+            </div>
+
+            <div class="form-group">
+                <label>Unidade</label>
+                <input type="text" name="unidade" value="{{ filtros.unidade }}">
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status">
+                    <option value="">Todos</option>
+                    <option value="AGUARDANDO_PAGAMENTO" {% if filtros.status == 'AGUARDANDO_PAGAMENTO' %}selected{% endif %}>AGUARDANDO PAGAMENTO</option>
+                    <option value="PAGO" {% if filtros.status == 'PAGO' %}selected{% endif %}>PAGO</option>
+                    <option value="EM_PREPARO" {% if filtros.status == 'EM_PREPARO' %}selected{% endif %}>EM PREPARO</option>
+                    <option value="PRONTO_PARA_RETIRADA" {% if filtros.status == 'PRONTO_PARA_RETIRADA' %}selected{% endif %}>PRONTO PARA RETIRADA</option>
+                    <option value="SAIU_PARA_ENTREGA" {% if filtros.status == 'SAIU_PARA_ENTREGA' %}selected{% endif %}>SAIU PARA ENTREGA</option>
+                    <option value="CONCLUIDO" {% if filtros.status == 'CONCLUIDO' %}selected{% endif %}>CONCLUIDO</option>
+                    <option value="CANCELADO" {% if filtros.status == 'CANCELADO' %}selected{% endif %}>CANCELADO</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Pagamento</label>
+                <select name="pagamento">
+                    <option value="">Todos</option>
+                    <option value="PENDENTE" {% if filtros.pagamento == 'PENDENTE' %}selected{% endif %}>PENDENTE</option>
+                    <option value="APROVADO" {% if filtros.pagamento == 'APROVADO' %}selected{% endif %}>APROVADO</option>
+                    <option value="RECUSADO" {% if filtros.pagamento == 'RECUSADO' %}selected{% endif %}>RECUSADO</option>
+                    <option value="EXPIRADO" {% if filtros.pagamento == 'EXPIRADO' %}selected{% endif %}>EXPIRADO</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="filtros-acoes">
+            <button type="submit">Filtrar</button>
+            <a class="btn btn-secondary" href="{{ url_for('pedidos.lista') }}">Limpar</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Cliente</th>
+                    <th>Unidade</th>
+                    <th>Status</th>
+                    <th>Pagamento</th>
+                    <th>Total</th>
+                    <th>Criado em</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pedidos %}
+                <tr>
+                    <td>{{ item.codigo_pedido or "-" }}</td>
+                    <td>{{ item.cliente_nome or "-" }}</td>
+                    <td>{{ item.unidade_nome or "-" }}</td>
+
+                    <td>
+                        {% if item.status == 'AGUARDANDO_PAGAMENTO' %}
+                            <span class="badge badge-warning">Aguardando Pagamento</span>
+                        {% elif item.status == 'PAGO' %}
+                            <span class="badge badge-info">Pago</span>
+                        {% elif item.status == 'EM_PREPARO' %}
+                            <span class="badge badge-info">Em Preparo</span>
+                        {% elif item.status == 'PRONTO_PARA_RETIRADA' %}
+                            <span class="badge badge-info">Pronto para Retirada</span>
+                        {% elif item.status == 'SAIU_PARA_ENTREGA' %}
+                            <span class="badge badge-info">Saiu para Entrega</span>
+                        {% elif item.status == 'CONCLUIDO' %}
+                            <span class="badge badge-success">Concluído</span>
+                        {% elif item.status == 'CANCELADO' %}
+                            <span class="badge badge-inativo">Cancelado</span>
+                        {% else %}
+                            <span class="badge badge-dark">{{ item.status or "-" }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.pagamento_status == 'PENDENTE' %}
+                            <span class="badge badge-warning">Pendente</span>
+                        {% elif item.pagamento_status == 'APROVADO' %}
+                            <span class="badge badge-success">Aprovado</span>
+                        {% elif item.pagamento_status == 'RECUSADO' %}
+                            <span class="badge badge-inativo">Recusado</span>
+                        {% elif item.pagamento_status == 'EXPIRADO' %}
+                            <span class="badge badge-dark">Expirado</span>
+                        {% else %}
+                            <span class="badge badge-dark">{{ item.pagamento_status or "-" }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td>R$ {{ "%.2f"|format(item.valor_total or 0) }}</td>
+                    <td>{{ item.criado_em | datetime_br }}</td>
+                    <td>
+                        {% if perfil in ['ADMIN', 'GERENTE', 'USUARIO'] %}
+                            <a href="{{ url_for('pedidos.detalhe', pedido_id=item.id) }}">Detalhar</a>
+                        {% else %}
+                            <span>-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8">Nenhum pedido cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

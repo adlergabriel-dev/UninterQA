@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% set perfil = session.get('usuario', {}).get('perfil', '').upper() %}
+
+<div class="card">
+    <div class="header-actions">
+        <h2>Cardápio por Unidade</h2>
+
+        {% if perfil in ['ADMIN', 'GERENTE'] %}
+            <a class="btn" href="{{ url_for('cardapio.novo') }}">Novo Vínculo</a>
+        {% endif %}
+    </div>
+
+    <form method="GET" class="card">
+        <div class="filtros-grid">
+            <div class="form-group">
+                <label>Unidade</label>
+                <input type="text" name="unidade" value="{{ filtros.unidade }}">
+            </div>
+
+            <div class="form-group">
+                <label>Produto</label>
+                <input type="text" name="produto" value="{{ filtros.produto }}">
+            </div>
+
+            <div class="form-group">
+                <label>Disponível</label>
+                <select name="disponivel">
+                    <option value="">Todos</option>
+                    <option value="SIM" {% if filtros.disponivel == 'SIM' %}selected{% endif %}>SIM</option>
+                    <option value="NAO" {% if filtros.disponivel == 'NAO' %}selected{% endif %}>NÃO</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Destaque</label>
+                <select name="destaque">
+                    <option value="">Todos</option>
+                    <option value="SIM" {% if filtros.destaque == 'SIM' %}selected{% endif %}>SIM</option>
+                    <option value="NAO" {% if filtros.destaque == 'NAO' %}selected{% endif %}>NÃO</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status">
+                    <option value="">Todos</option>
+                    <option value="ATIVO" {% if filtros.status == 'ATIVO' %}selected{% endif %}>ATIVO</option>
+                    <option value="INATIVO" {% if filtros.status == 'INATIVO' %}selected{% endif %}>INATIVO</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="filtros-acoes">
+            <button type="submit">Filtrar</button>
+            <a class="btn btn-secondary" href="{{ url_for('cardapio.lista') }}">Limpar</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Imagem</th>
+                    <th>Unidade</th>
+                    <th>Produto</th>
+                    <th>Preço</th>
+                    <th>Disponível</th>
+                    <th>Destaque</th>
+                    <th>Ordem</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cardapios %}
+                <tr>
+                    <td>
+                        {% if item.imagem_url %}
+                            <img src="{{ item.imagem_url }}" alt="{{ item.nome_produto }}" class="miniatura-produto">
+                        {% else %}
+                            <span>-</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.nome_unidade }}</td>
+                    <td>{{ item.nome_produto }}</td>
+                    <td>R$ {{ "%.2f"|format(item.preco_venda or 0) }}</td>
+                    <td>
+                        {% if item.disponivel %}
+                            <span class="badge badge-success">Sim</span>
+                        {% else %}
+                            <span class="badge badge-dark">Não</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.destaque %}
+                            <span class="badge badge-info">Sim</span>
+                        {% else %}
+                            <span class="badge badge-dark">Não</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.ordem_exibicao or 0 }}</td>
+                    <td>
+                        {% if item.ativo %}
+                            <span class="badge badge-ativo">Ativo</span>
+                        {% else %}
+                            <span class="badge badge-inativo">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if perfil in ['ADMIN', 'GERENTE'] %}
+                            <a href="{{ url_for('cardapio.editar', cardapio_id=item.id) }}">Editar</a>
+
+                            {% if item.ativo %}
+                                <a href="{{ url_for('cardapio.alterar_status', cardapio_id=item.id, acao='inativar') }}">Inativar</a>
+                            {% else %}
+                                <a href="{{ url_for('cardapio.alterar_status', cardapio_id=item.id, acao='ativar') }}">Ativar</a>
+                            {% endif %}
+                        {% else %}
+                            <span>-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9">Nenhum item de cardápio cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

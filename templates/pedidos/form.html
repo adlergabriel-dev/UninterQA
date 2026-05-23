@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="header-actions">
+        <div>
+            <h2>Novo Pedido</h2>
+            <p style="color:#666; margin: 0;">
+                Crie um pedido interno selecionando cliente, unidade e produto.
+            </p>
+        </div>
+    </div>
+
+    <form method="POST">
+        <div class="filtros-grid">
+            <div class="form-group">
+                <label>Cliente</label>
+                <select name="cliente_id" required>
+                    <option value="">Selecione</option>
+                    {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}"
+                            {% if pedido and pedido.get('cliente_id') == cliente.id %}selected{% endif %}>
+                            {{ cliente.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Unidade</label>
+                <select name="unidade_id" required>
+                    <option value="">Selecione</option>
+                    {% for unidade in unidades %}
+                        <option value="{{ unidade.id }}"
+                            {% if pedido and pedido.get('unidade_id') == unidade.id %}selected{% endif %}>
+                            {{ unidade.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Produto</label>
+                <select name="produto_id" required>
+                    <option value="">Selecione</option>
+                    {% for produto in produtos %}
+                        <option value="{{ produto.id }}"
+                            {% if pedido and pedido.get('produto_id') == produto.id %}selected{% endif %}>
+                            {{ produto.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Quantidade</label>
+                <input type="number" name="quantidade" min="1" value="{{ pedido.quantidade if pedido else 1 }}" required>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Observação</label>
+                <input type="text" name="observacao" value="{{ pedido.observacao if pedido else '' }}">
+            </div>
+        </div>
+
+        <div class="filtros-acoes">
+            <button type="submit">Criar Pedido</button>
+            <a class="btn btn-secondary" href="{{ url_for('pedidos.lista') }}">Voltar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

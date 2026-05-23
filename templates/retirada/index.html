@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/retirada.css') }}">
+
+<div class="retirada-page">
+
+    <div class="card retirada-header-card">
+        <div class="retirada-header">
+            <div>
+                <h2>Retirada / Entrega</h2>
+                <p class="retirada-subtitulo">
+                    Pedidos pagos e prontos para retirada no balcão ou entrega ao cliente.
+                    Pedidos já fechados no caixa não aparecem mais nesta tela.
+                </p>
+            </div>
+
+            <div class="retirada-header-actions">
+                <a class="btn btn-secondary" href="{{ url_for('cozinha.index') }}">
+                    Cozinha
+                </a>
+                <a class="btn btn-secondary" href="{{ url_for('pedidos_admin.lista') }}">
+                    Gestão de Pedidos
+                </a>
+            </div>
+        </div>
+
+        <div class="retirada-dashboard">
+            <div class="retirada-indicador">
+                <span>Total pronto</span>
+                <strong>{{ dashboard.total }}</strong>
+            </div>
+
+            <div class="retirada-indicador">
+                <span>Balcão</span>
+                <strong>{{ dashboard.balcao }}</strong>
+            </div>
+
+            <div class="retirada-indicador">
+                <span>Cliente Web</span>
+                <strong>{{ dashboard.cliente_web }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <form method="GET">
+            <div class="retirada-filtros">
+                <div class="form-group">
+                    <label>Filial</label>
+                    <select name="unidade_id">
+                        <option value="">Todas</option>
+                        {% for unidade in unidades %}
+                            <option value="{{ unidade.id }}" {% if filtros.unidade_id == unidade.id %}selected{% endif %}>
+                                {{ unidade.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Origem</label>
+                    <select name="origem">
+                        <option value="">Todas</option>
+                        {% for item in origem_opcoes %}
+                            <option value="{{ item }}" {% if filtros.origem == item %}selected{% endif %}>
+                                {% if item == "BALCAO" %}
+                                    Balcão
+                                {% elif item == "CLIENTE_WEB" %}
+                                    Cliente Web
+                                {% else %}
+                                    {{ item }}
+                                {% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="filtros-acoes">
+                <button type="submit">Filtrar</button>
+                <a class="btn btn-secondary" href="{{ url_for('retirada.index') }}">Limpar</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="retirada-grid">
+        {% for pedido in pedidos %}
+            <div class="retirada-card">
+
+                <div class="retirada-card-topo">
+                    <div>
+                        <strong>{{ pedido.codigo_pedido }}</strong>
+                        <span>{{ pedido.cliente_nome or "-" }}</span>
+                    </div>
+
+                    <span class="{{ pedido.status_classe }}">
+                        {{ pedido.status_descricao }}
+                    </span>
+                </div>
+
+                <div class="retirada-info">
+                    <p><strong>Filial:</strong> {{ pedido.unidade_nome or "-" }}</p>
+                    <p>
+                        <strong>Origem:</strong>
+                        {% if pedido.origem == "BALCAO" %}
+                            Balcão
+                        {% elif pedido.origem == "CLIENTE_WEB" %}
+                            Cliente Web
+                        {% else %}
+                            {{ pedido.origem or "-" }}
+                        {% endif %}
+                    </p>
+                    <p><strong>Total:</strong> {{ pedido.valor_total_formatado }}</p>
+                    <p><strong>Criado em:</strong> {{ pedido.criado_em | datetime_br }}</p>
+                </div>
+
+                <div class="retirada-itens">
+                    <h4>Itens</h4>
+
+                    {% for item in pedido.itens %}
+                        <div class="retirada-item">
+                            <div>
+                                <strong>{{ item.produto_nome or item.nome or "-" }}</strong>
+                                {% if item.observacao %}
+                                    <small>Obs.: {{ item.observacao }}</small>
+                                {% endif %}
+                            </div>
+
+                            <span>x{{ item.quantidade }}</span>
+                        </div>
+                    {% else %}
+                        <div class="retirada-vazio">
+                            Nenhum item encontrado.
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="retirada-acoes">
+                    <a class="btn btn-secondary btn-mini"
+                       href="{{ url_for('pedidos_admin.detalhe', pedido_id=pedido.id) }}">
+                        Detalhar
+                    </a>
+
+                    {% if not pedido.fechado_em_caixa %}
+                        <form method="POST" action="{{ url_for('retirada.finalizar', pedido_id=pedido.id) }}">
+                            <button type="submit" class="btn-mini btn-finalizar">
+                                Finalizar Entrega
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+
+            </div>
+        {% else %}
+            <div class="card retirada-sem-pedidos">
+                Nenhum pedido pronto para retirada ou entrega.
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

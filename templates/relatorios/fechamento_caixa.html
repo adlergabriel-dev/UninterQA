@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fechamento_caixa.css') }}">
+
+<div class="card fechamento-page">
+
+    <div class="fechamento-header">
+        <div>
+            <h2>Fechamento de Caixa por Filial</h2>
+            <p class="fechamento-subtitulo">
+                Consolidação financeira dos pedidos balcão e web por período, filial, origem e forma de pagamento.
+            </p>
+        </div>
+
+        <div class="fechamento-acoes">
+            <a class="btn btn-secondary" href="{{ url_for('relatorios.index') }}">
+                Voltar
+            </a>
+
+            <a class="btn btn-success"
+               href="{{ url_for('fechamento_caixa.exportar_excel',
+                    data_inicio=filtros.data_inicio,
+                    data_fim=filtros.data_fim,
+                    unidade_id=filtros.unidade_id,
+                    forma_pagamento=filtros.forma_pagamento,
+                    situacao_pagamento=filtros.situacao_pagamento,
+                    origem=filtros.origem
+               ) }}">
+                Exportar Excel
+            </a>
+        </div>
+    </div>
+
+    <form method="GET">
+        <div class="filtros-fechamento">
+
+            <div>
+                <label>Data Inicial</label>
+                <input type="date" name="data_inicio" value="{{ filtros.data_inicio }}">
+            </div>
+
+            <div>
+                <label>Data Final</label>
+                <input type="date" name="data_fim" value="{{ filtros.data_fim }}">
+            </div>
+
+            <div>
+                <label>Filial</label>
+                <select name="unidade_id">
+                    <option value="">Todas</option>
+                    {% for unidade in unidades %}
+                        <option value="{{ unidade.id }}"
+                            {% if filtros.unidade_id == unidade.id %}selected{% endif %}>
+                            {{ unidade.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Origem</label>
+                <select name="origem">
+                    <option value="">Todas</option>
+                    <option value="BALCAO" {% if filtros.origem == "BALCAO" %}selected{% endif %}>
+                        Balcão
+                    </option>
+                    <option value="CLIENTE_WEB" {% if filtros.origem == "CLIENTE_WEB" %}selected{% endif %}>
+                        Cliente Web
+                    </option>
+                </select>
+            </div>
+
+            <div>
+                <label>Forma Pagamento</label>
+                <select name="forma_pagamento">
+                    <option value="">Todas</option>
+                    {% for fp in ["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito", "Voucher", "DINHEIRO", "PIX", "CARTAO", "CARTAO_CREDITO", "CARTAO_DEBITO"] %}
+                        <option value="{{ fp }}" {% if filtros.forma_pagamento == fp %}selected{% endif %}>
+                            {{ fp }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Situação Pagamento</label>
+                <select name="situacao_pagamento">
+                    <option value="">Todas</option>
+                    {% for sp in ["PENDENTE", "AGUARDANDO_PAGAMENTO", "PAGO", "RECUSADO", "CANCELADO", "ESTORNADO"] %}
+                        <option value="{{ sp }}" {% if filtros.situacao_pagamento == sp %}selected{% endif %}>
+                            {{ sp }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+        </div>
+
+        <div class="acoes-filtro">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('fechamento_caixa.index') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+
+    <div class="card" style="margin-top: 18px;">
+        <div class="header-actions">
+            <div>
+                <h3>Fechar Caixa</h3>
+                <p style="margin: 4px 0 0 0; color: #666;">
+                    Para registrar o fechamento oficial, informe período e filial nos filtros acima.
+                </p>
+            </div>
+        </div>
+
+        <form method="POST"
+              action="{{ url_for('fechamento_caixa.fechar') }}"
+              onsubmit="return confirm('Deseja realmente fechar o caixa deste período e filial?');">
+
+            <input type="hidden" name="data_inicio" value="{{ filtros.data_inicio }}">
+            <input type="hidden" name="data_fim" value="{{ filtros.data_fim }}">
+            <input type="hidden" name="unidade_id" value="{{ filtros.unidade_id }}">
+
+            <div class="form-group">
+                <label>Observação do Fechamento</label>
+                <textarea name="observacao" rows="3" placeholder="Informe alguma observação, divergência ou conferência realizada."></textarea>
+            </div>
+
+            <div class="acoes-filtro">
+                <button type="submit" class="btn btn-primary">
+                    Fechar Caixa
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="cards-resumo">
+
+        <div class="card-resumo">
+            <div class="titulo">Total de Pedidos</div>
+            <div class="valor">{{ totais.total_pedidos }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total de Itens</div>
+            <div class="valor">{{ totais.total_itens }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total Geral</div>
+            <div class="valor">{{ totais.total_geral|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total Pago</div>
+            <div class="valor destaque-pago">{{ totais.total_pago|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total Pendente</div>
+            <div class="valor destaque-pendente">{{ totais.total_pendente|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total Cancelado</div>
+            <div class="valor destaque-cancelado">{{ totais.total_cancelado|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Produtos</div>
+            <div class="valor">{{ totais.total_produtos|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Descontos</div>
+            <div class="valor">{{ totais.total_descontos|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Entrega / Taxas</div>
+            <div class="valor">{{ totais.total_entregas|moeda }}</div>
+        </div>
+
+    </div>
+
+    <div class="resumos-grid">
+
+        <div class="mini-resumo">
+            <h4>Resumo por Origem</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Origem</th>
+                        <th>Qtd</th>
+                        <th>Total</th>
+                        <th>Pago</th>
+                        <th>Pendente</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nome, item in totais.resumo_por_origem.items() %}
+                        <tr>
+                            <td>{{ nome }}</td>
+                            <td>{{ item.quantidade }}</td>
+                            <td>{{ item.valor_total|moeda }}</td>
+                            <td>{{ item.valor_pago|moeda }}</td>
+                            <td>{{ item.valor_pendente|moeda }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5">Sem dados</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mini-resumo">
+            <h4>Resumo por Forma de Pagamento</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Forma</th>
+                        <th>Qtd</th>
+                        <th>Total</th>
+                        <th>Pago</th>
+                        <th>Pendente</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nome, item in totais.resumo_por_forma.items() %}
+                        <tr>
+                            <td>{{ nome }}</td>
+                            <td>{{ item.quantidade }}</td>
+                            <td>{{ item.valor_total|moeda }}</td>
+                            <td>{{ item.valor_pago|moeda }}</td>
+                            <td>{{ item.valor_pendente|moeda }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5">Sem dados</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mini-resumo">
+            <h4>Resumo por Situação do Pagamento</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Situação</th>
+                        <th>Qtd</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nome, item in totais.resumo_por_pagamento.items() %}
+                        <tr>
+                            <td>{{ nome }}</td>
+                            <td>{{ item.quantidade }}</td>
+                            <td>{{ item.valor_total|moeda }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="3">Sem dados</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mini-resumo">
+            <h4>Resumo por Filial</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Filial</th>
+                        <th>Qtd</th>
+                        <th>Total</th>
+                        <th>Pago</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nome, item in totais.resumo_por_filial.items() %}
+                        <tr>
+                            <td>{{ nome }}</td>
+                            <td>{{ item.quantidade }}</td>
+                            <td>{{ item.valor_total|moeda }}</td>
+                            <td>{{ item.valor_pago|moeda }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4">Sem dados</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="tabela-container">
+        <table class="tabela-fechamento">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Data</th>
+                    <th>Origem</th>
+                    <th>Filial</th>
+                    <th>Cliente</th>
+                    <th>Status</th>
+                    <th>Forma Pagamento</th>
+                    <th>Situação Pagamento</th>
+                    <th>Qtd Itens</th>
+                    <th>Produtos</th>
+                    <th>Desconto</th>
+                    <th>Entrega</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in linhas %}
+                    <tr>
+                        <td>{{ item.codigo_pedido }}</td>
+                        <td>{{ item.data_formatada }}</td>
+                        <td>{{ item.origem_formatada }}</td>
+                        <td>{{ item.unidade_nome }}</td>
+                        <td>{{ item.cliente_nome }}</td>
+
+                        <td>
+                            <span class="badge-status {% if item.status in ['CANCELADO', 'CANCELADA'] %}badge-cancelado{% endif %}">
+                                {{ item.status }}
+                            </span>
+                        </td>
+
+                        <td>{{ item.forma_pagamento }}</td>
+
+                        <td>
+                            <span class="badge-status
+                                {% if item.situacao_pagamento in ['PAGO', 'APROVADO', 'CONFIRMADO'] %}badge-pago{% endif %}
+                                {% if item.situacao_pagamento in ['PENDENTE', 'AGUARDANDO', 'AGUARDANDO_PAGAMENTO', 'EM_ABERTO', 'EM ABERTO'] %}badge-pendente{% endif %}
+                                {% if item.situacao_pagamento in ['CANCELADO', 'ESTORNADO', 'RECUSADO'] %}badge-cancelado{% endif %}
+                            ">
+                                {{ item.situacao_pagamento }}
+                            </span>
+                        </td>
+
+                        <td>{{ item.qtd_itens }}</td>
+                        <td>{{ item.valor_produtos|moeda }}</td>
+                        <td>{{ item.valor_desconto|moeda }}</td>
+                        <td>{{ item.valor_entrega|moeda }}</td>
+                        <td><strong>{{ item.valor_total|moeda }}</strong></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="13" class="texto-vazio">
+                            Nenhum pedido encontrado para os filtros informados.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <div class="header-actions">
+        <div>
+            <h3>Histórico de Fechamentos</h3>
+            <p style="margin: 4px 0 0 0; color: #666;">
+                Últimos fechamentos registrados no sistema.
+            </p>
+        </div>
+    </div>
+
+    <div class="tabela-container">
+        <table class="tabela-fechamento">
+            <thead>
+                <tr>
+                    <th>Data Registro</th>
+                    <th>Período</th>
+                    <th>Filial</th>
+                    <th>Pedidos</th>
+                    <th>Total Geral</th>
+                    <th>Total Pago</th>
+                    <th>Pendente</th>
+                    <th>Cancelado</th>
+                    <th>Responsável</th>
+                    <th>Observação</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in fechamentos %}
+                    <tr>
+                        <td>{{ item.criado_em_texto or item.criado_em }}</td>
+                        <td>{{ item.data_inicio }} até {{ item.data_fim }}</td>
+                        <td>{{ item.unidade_nome }}</td>
+                        <td>{{ item.total_pedidos }}</td>
+                        <td>{{ item.total_geral_formatado }}</td>
+                        <td>{{ item.total_pago_formatado }}</td>
+                        <td>{{ item.total_pendente_formatado }}</td>
+                        <td>{{ item.total_cancelado_formatado }}</td>
+                        <td>{{ item.usuario_nome or "-" }}</td>
+                        <td>{{ item.observacao or "-" }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="10" class="texto-vazio">
+                            Nenhum fechamento registrado até o momento.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

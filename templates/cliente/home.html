@@ -1,0 +1,165 @@
+{% extends "cliente/base_cliente.html" %}
+
+{% block cliente_content %}
+<div class="cliente-box">
+    <div class="header-actions">
+        <h2>Área do Cliente</h2>
+    </div>
+
+    <div class="cliente-grid">
+        <div class="cliente-card-info">
+            <h3>Meus Dados</h3>
+            <p><strong>Nome:</strong> {{ cliente.nome or "-" }}</p>
+            <p><strong>Telefone:</strong> {{ cliente.telefone or "-" }}</p>
+            <p><strong>E-mail:</strong> {{ cliente.email or "-" }}</p>
+            <p><strong>CPF:</strong> {{ cliente.cpf or "-" }}</p>
+        </div>
+
+        <div class="cliente-card-info">
+            <h3>Informações da Conta</h3>
+            <p><strong>Status:</strong> {{ "Ativo" if cliente.ativo else "Inativo" }}</p>
+            <p><strong>Origem:</strong> {{ cliente.origem or "-" }}</p>
+            <p><strong>Criado em:</strong> {{ cliente.criado_em | datetime_br }}</p>
+            <p><strong>Atualizado em:</strong> {{ cliente.atualizado_em | datetime_br }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="cliente-box">
+    <div class="header-actions">
+        <h3>Resumo do Último Pedido</h3>
+        {% if ultimo_pedido %}
+            <a class="btn btn-secondary" href="{{ url_for('cliente_pedido.meus_pedidos') }}">Ver Todos</a>
+        {% endif %}
+    </div>
+
+    {% if ultimo_pedido %}
+        <div class="resumo-pedido-grid">
+            <div class="resumo-pedido-card">
+                <h4>Pedido</h4>
+                <div class="resumo-pedido-label">Código</div>
+                <div class="resumo-pedido-destaque">{{ ultimo_pedido.codigo_pedido }}</div>
+                <p><strong>Filial:</strong> {{ ultimo_pedido.unidade_nome }}</p>
+                <p><strong>Criado em:</strong> {{ ultimo_pedido.criado_em | datetime_br }}</p>
+            </div>
+
+            <div class="resumo-pedido-card">
+                <h4>Status do Pedido</h4>
+
+                <p>
+                    <span class="badge-status badge-status-{{ ultimo_pedido.status_cliente_codigo or (ultimo_pedido.status or '')|lower }}">
+                        {{ ultimo_pedido.status_cliente_descricao or ultimo_pedido.status_descricao or "-" }}
+                    </span>
+                </p>
+
+                {% if ultimo_pedido.status_cliente_mensagem %}
+                    <p class="pedido-mensagem-cliente">
+                        {{ ultimo_pedido.status_cliente_mensagem }}
+                    </p>
+                {% endif %}
+
+                <p><strong>Itens:</strong> {{ ultimo_pedido.quantidade_total_itens or ultimo_pedido.quantidade_itens }}</p>
+                <p><strong>Total:</strong> {{ ultimo_pedido.valor_total_formatado }}</p>
+            </div>
+
+            <div class="resumo-pedido-card">
+                <h4>Pagamento</h4>
+                <p>
+                    <span class="badge-pagamento badge-pagamento-{{ (ultimo_pedido.pagamento_status or '')|lower }}">
+                        {{ ultimo_pedido.pagamento_status_descricao or ultimo_pedido.pagamento_status or "-" }}
+                    </span>
+                </p>
+                <p><strong>Forma:</strong> {{ ultimo_pedido.pagamento_metodo_descricao or ultimo_pedido.pagamento_metodo or "-" }}</p>
+                <p><strong>Pago em:</strong> {{ ultimo_pedido.pago_em | datetime_br }}</p>
+            </div>
+        </div>
+
+        <div class="pedido-progresso pedido-progresso-detalhe">
+            <div class="pedido-progresso-item {% if ultimo_pedido.status_cliente_etapa >= 1 %}ativo{% endif %}">
+                <span>1</span>
+                <small>Pagamento</small>
+            </div>
+
+            <div class="pedido-progresso-item {% if ultimo_pedido.status_cliente_etapa >= 2 %}ativo{% endif %}">
+                <span>2</span>
+                <small>Confirmado</small>
+            </div>
+
+            <div class="pedido-progresso-item {% if ultimo_pedido.status_cliente_etapa >= 3 %}ativo{% endif %}">
+                <span>3</span>
+                <small>Preparo</small>
+            </div>
+
+            <div class="pedido-progresso-item {% if ultimo_pedido.status_cliente_etapa >= 4 %}ativo{% endif %}">
+                <span>4</span>
+                <small>Saiu para entrega</small>
+            </div>
+
+            <div class="pedido-progresso-item {% if ultimo_pedido.status_cliente_etapa >= 5 %}ativo{% endif %}">
+                <span>5</span>
+                <small>Finalizado</small>
+            </div>
+        </div>
+
+        <div class="cliente-acoes" style="margin-top: 18px;">
+            <a class="btn" href="{{ url_for('cliente_pedido.detalhe_pedido', pedido_id=ultimo_pedido.id) }}">Ver Detalhes</a>
+            <a class="btn btn-secondary" href="{{ url_for('cliente_pedido.novo_pedido') }}">Novo Pedido</a>
+        </div>
+    {% else %}
+        <div class="home-cliente-vazio">
+            <p>Você ainda não possui pedidos realizados.</p>
+            <div class="cliente-acoes">
+                <a class="btn" href="{{ url_for('cliente_pedido.novo_pedido') }}">Fazer Primeiro Pedido</a>
+                <a class="btn btn-secondary" href="{{ url_for('cliente_cardapio.cardapio') }}">Ver Cardápio</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="cliente-box">
+    <h3>Bem-vindo ao portal</h3>
+    <p>
+        Escolha uma das opções abaixo para começar. Você pode consultar o cardápio, realizar um novo pedido,
+        acompanhar seus pedidos ou atualizar seus dados cadastrais.
+    </p>
+
+    <div class="cliente-acoes">
+        <a class="btn" href="{{ url_for('cliente_pedido.novo_pedido') }}">Fazer Pedido</a>
+        <a class="btn btn-secondary" href="{{ url_for('cliente_cardapio.cardapio') }}">Ver Cardápio</a>
+    </div>
+</div>
+
+<div class="cliente-box">
+    <h3>Ações rápidas</h3>
+
+    <div class="cliente-grid">
+        <a class="card-link" href="{{ url_for('cliente_cardapio.cardapio') }}">
+            <div class="cliente-card-info">
+                <h3>Cardápio</h3>
+                <p>Visualize os produtos disponíveis por filial.</p>
+            </div>
+        </a>
+
+        <a class="card-link" href="{{ url_for('cliente_pedido.novo_pedido') }}">
+            <div class="cliente-card-info">
+                <h3>Novo Pedido</h3>
+                <p>Escolha a filial, os itens e a forma de pagamento.</p>
+            </div>
+        </a>
+
+        <a class="card-link" href="{{ url_for('cliente_pedido.meus_pedidos') }}">
+            <div class="cliente-card-info">
+                <h3>Meus Pedidos</h3>
+                <p>Acompanhe seus pedidos e o status do pagamento.</p>
+            </div>
+        </a>
+
+        <a class="card-link" href="{{ url_for('cliente_portal.meu_cadastro') }}">
+            <div class="cliente-card-info">
+                <h3>Meu Cadastro</h3>
+                <p>Atualize seus dados pessoais e de contato.</p>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

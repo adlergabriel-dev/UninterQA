@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="cliente-portal">
+    {% if session.get("cliente") %}
+        <div class="cliente-hero">
+            <div class="cliente-hero-topo">
+                <div>
+                    <h1 class="cliente-hero-titulo">Portal do Cliente</h1>
+                    <div class="cliente-hero-subtitulo">
+                        Acompanhe seus pedidos, consulte o cardápio e atualize seu cadastro.
+                    </div>
+                </div>
+
+                <div class="cliente-hero-usuario">
+                    <span>{{ session.get("cliente", {}).get("nome", "Cliente") }}</span>
+                </div>
+            </div>
+
+            <div class="cliente-hero-acoes">
+                <a class="btn btn-secondary" href="{{ url_for('cliente_auth.logout') }}">Sair</a>
+            </div>
+
+            <div class="cliente-menu">
+                <a class="btn btn-secondary" href="{{ url_for('cliente_auth.home') }}">Início</a>
+                <a class="btn btn-secondary" href="{{ url_for('cliente_cardapio.cardapio') }}">Cardápio</a>
+                <a class="btn btn-secondary" href="{{ url_for('cliente_pedido.novo_pedido') }}">Novo Pedido</a>
+                <a class="btn btn-secondary" href="{{ url_for('cliente_pedido.meus_pedidos') }}">Meus Pedidos</a>
+                <a class="btn btn-secondary" href="{{ url_for('cliente_portal.meu_cadastro') }}">Meu Cadastro</a>
+            </div>
+        </div>
+    {% endif %}
+
+    {% block cliente_content %}{% endblock %}
+</div>
+{% endblock %}

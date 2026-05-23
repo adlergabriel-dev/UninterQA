@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/movimento_diario.css') }}">
+
+<div class="card movimento-diario-page">
+
+    <div class="movimento-diario-header">
+        <div>
+            <h2>Movimento Diário de Vendas</h2>
+            <p class="movimento-diario-subtitulo">
+                Consolidação dos pedidos por data, origem e filial.
+            </p>
+        </div>
+
+        <div class="movimento-diario-acoes">
+            <a class="btn btn-secondary" href="{{ url_for('relatorios.index') }}">
+                Voltar
+            </a>
+
+            <a class="btn btn-success"
+               href="{{ url_for('relatorio_movimento_diario.exportar_excel',
+                    data_inicio=filtros.data_inicio,
+                    data_fim=filtros.data_fim,
+                    unidade_id=filtros.unidade_id,
+                    situacao_pagamento=filtros.situacao_pagamento,
+                    origem=filtros.origem
+               ) }}">
+                Exportar Excel
+            </a>
+        </div>
+    </div>
+
+    <form method="GET">
+        <div class="filtros-movimento-diario">
+
+            <div>
+                <label>Data Inicial</label>
+                <input type="date" name="data_inicio" value="{{ filtros.data_inicio }}">
+            </div>
+
+            <div>
+                <label>Data Final</label>
+                <input type="date" name="data_fim" value="{{ filtros.data_fim }}">
+            </div>
+
+            <div>
+                <label>Filial</label>
+                <select name="unidade_id">
+                    <option value="">Todas</option>
+                    {% for unidade in unidades %}
+                        <option value="{{ unidade.id }}"
+                            {% if filtros.unidade_id == unidade.id %}selected{% endif %}>
+                            {{ unidade.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Origem</label>
+                <select name="origem">
+                    <option value="">Todas</option>
+                    <option value="BALCAO" {% if filtros.origem == "BALCAO" %}selected{% endif %}>
+                        Balcão
+                    </option>
+                    <option value="CLIENTE_WEB" {% if filtros.origem == "CLIENTE_WEB" %}selected{% endif %}>
+                        Cliente Web
+                    </option>
+                </select>
+            </div>
+
+            <div>
+                <label>Situação Pagamento</label>
+                <select name="situacao_pagamento">
+                    <option value="">Todas</option>
+                    {% for sp in ["PENDENTE", "PAGO", "CANCELADO", "ESTORNADO"] %}
+                        <option value="{{ sp }}" {% if filtros.situacao_pagamento == sp %}selected{% endif %}>
+                            {{ sp }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+        </div>
+
+        <div class="acoes-filtro">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('relatorio_movimento_diario.index') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+
+    <div class="cards-resumo">
+
+        <div class="card-resumo">
+            <div class="titulo">Dias com Movimento</div>
+            <div class="valor">{{ totais.total_dias }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Pedidos</div>
+            <div class="valor">{{ totais.total_pedidos }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Itens</div>
+            <div class="valor">{{ totais.total_itens }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total Geral</div>
+            <div class="valor">{{ totais.total_geral|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total Pago</div>
+            <div class="valor destaque-pago">{{ totais.total_pago|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total Pendente</div>
+            <div class="valor destaque-pendente">{{ totais.total_pendente|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total Cancelado</div>
+            <div class="valor destaque-cancelado">{{ totais.total_cancelado|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Ticket Médio</div>
+            <div class="valor">{{ totais.ticket_medio|moeda }}</div>
+        </div>
+
+    </div>
+
+    <div class="resumos-grid">
+
+        <div class="mini-resumo">
+            <h4>Resumo por Origem</h4>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Origem</th>
+                        <th>Dias</th>
+                        <th>Pedidos</th>
+                        <th>Itens</th>
+                        <th>Total</th>
+                        <th>Pago</th>
+                        <th>Pendente</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nome, item in totais.resumo_por_origem.items() %}
+                        <tr>
+                            <td>{{ nome }}</td>
+                            <td>{{ item.dias }}</td>
+                            <td>{{ item.pedidos }}</td>
+                            <td>{{ item.itens }}</td>
+                            <td>{{ item.valor_total|moeda }}</td>
+                            <td>{{ item.valor_pago|moeda }}</td>
+                            <td>{{ item.valor_pendente|moeda }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7">Sem dados</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mini-resumo">
+            <h4>Resumo por Filial</h4>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Filial</th>
+                        <th>Dias</th>
+                        <th>Pedidos</th>
+                        <th>Itens</th>
+                        <th>Total</th>
+                        <th>Pago</th>
+                        <th>Pendente</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nome, item in totais.resumo_por_filial.items() %}
+                        <tr>
+                            <td>{{ nome }}</td>
+                            <td>{{ item.dias }}</td>
+                            <td>{{ item.pedidos }}</td>
+                            <td>{{ item.itens }}</td>
+                            <td>{{ item.valor_total|moeda }}</td>
+                            <td>{{ item.valor_pago|moeda }}</td>
+                            <td>{{ item.valor_pendente|moeda }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7">Sem dados</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="tabela-container">
+        <table class="tabela-movimento-diario">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Origem</th>
+                    <th>Filial</th>
+                    <th>Pedidos</th>
+                    <th>Itens</th>
+                    <th>Produtos</th>
+                    <th>Descontos</th>
+                    <th>Entrega</th>
+                    <th>Total</th>
+                    <th>Pago</th>
+                    <th>Pendente</th>
+                    <th>Ticket Médio</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in linhas %}
+                    <tr>
+                        <td>{{ item.data_formatada }}</td>
+                        <td>{{ item.origem_formatada }}</td>
+                        <td>{{ item.unidade_nome }}</td>
+                        <td>{{ item.quantidade_pedidos }}</td>
+                        <td>{{ item.quantidade_itens }}</td>
+                        <td>{{ item.valor_produtos|moeda }}</td>
+                        <td>{{ item.valor_descontos|moeda }}</td>
+                        <td>{{ item.valor_entregas|moeda }}</td>
+                        <td><strong>{{ item.valor_total|moeda }}</strong></td>
+                        <td>{{ item.valor_pago|moeda }}</td>
+                        <td>{{ item.valor_pendente|moeda }}</td>
+                        <td>{{ item.ticket_medio|moeda }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="12" class="texto-vazio">
+                            Nenhum movimento encontrado para os filtros informados.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+    <div class="secao-detalhes">
+        <h3>Detalhamento dos Pedidos</h3>
+
+        <div class="tabela-container">
+            <table class="tabela-movimento-diario">
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Data</th>
+                        <th>Origem</th>
+                        <th>Filial</th>
+                        <th>Cliente</th>
+                        <th>Status</th>
+                        <th>Pagamento</th>
+                        <th>Itens</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in linhas_detalhe %}
+                        <tr>
+                            <td>{{ item.codigo_pedido }}</td>
+                            <td>{{ item.data_formatada }}</td>
+                            <td>{{ item.origem_formatada }}</td>
+                            <td>{{ item.unidade_nome }}</td>
+                            <td>{{ item.cliente_nome }}</td>
+                            <td>
+                                <span class="badge-status {% if item.status in ['CANCELADO', 'CANCELADA'] %}badge-cancelado{% endif %}">
+                                    {{ item.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-status
+                                    {% if item.situacao_pagamento in ['PAGO', 'APROVADO', 'CONFIRMADO'] %}badge-pago{% endif %}
+                                    {% if item.situacao_pagamento in ['PENDENTE', 'AGUARDANDO', 'EM_ABERTO', 'EM ABERTO'] %}badge-pendente{% endif %}
+                                    {% if item.situacao_pagamento in ['CANCELADO', 'ESTORNADO'] %}badge-cancelado{% endif %}
+                                ">
+                                    {{ item.situacao_pagamento }}
+                                </span>
+                            </td>
+                            <td>{{ item.qtd_itens }}</td>
+                            <td><strong>{{ item.valor_total|moeda }}</strong></td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="texto-vazio">
+                                Nenhum pedido encontrado.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

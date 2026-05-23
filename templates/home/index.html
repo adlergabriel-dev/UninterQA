@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="home-dashboard">
+    <div class="card home-hero-card">
+        <div class="header-actions">
+            <div>
+                <h2>Painel Inicial</h2>
+                <p class="home-hero-texto">
+                    Bem-vindo, <strong>{{ usuario.nome }}</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid dashboard-grid-home">
+        <div class="dashboard-card dashboard-card-home">
+            <h3>Unidades</h3>
+            <div class="valor">{{ resumo.total_unidades }}</div>
+            <div class="dashboard-meta">Ativas: {{ resumo.total_unidades_ativas }}</div>
+        </div>
+
+        <div class="dashboard-card dashboard-card-home">
+            <h3>Produtos</h3>
+            <div class="valor">{{ resumo.total_produtos }}</div>
+            <div class="dashboard-meta">Ativos: {{ resumo.total_produtos_ativos }}</div>
+        </div>
+
+        <div class="dashboard-card dashboard-card-home">
+            <h3>Clientes</h3>
+            <div class="valor">{{ resumo.total_clientes }}</div>
+            <div class="dashboard-meta">Ativos: {{ resumo.total_clientes_ativos }}</div>
+        </div>
+
+        <div class="dashboard-card dashboard-card-home">
+            <h3>Cardápio</h3>
+            <div class="valor">{{ resumo.total_cardapio }}</div>
+            <div class="dashboard-meta">Disponíveis: {{ resumo.total_cardapio_disponiveis }}</div>
+        </div>
+
+        <div class="dashboard-card dashboard-card-home">
+            <h3>Pedidos</h3>
+            <div class="valor">{{ resumo.total_pedidos }}</div>
+            <div class="dashboard-meta">Aguardando pagamento: {{ resumo.pedidos_aguardando_pagamento }}</div>
+        </div>
+
+        <div class="dashboard-card dashboard-card-home">
+            <h3>Concluídos</h3>
+            <div class="valor">{{ resumo.pedidos_concluidos }}</div>
+            <div class="dashboard-meta">Cancelados: {{ resumo.pedidos_cancelados }}</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="header-actions">
+            <h3>Ações rápidas</h3>
+        </div>
+
+        <div class="atalhos-grid">
+            <a class="atalho-card" href="{{ url_for('unidades.lista') }}">
+                <span class="atalho-titulo">Unidades</span>
+                <span class="atalho-descricao">Gerenciar unidades cadastradas</span>
+            </a>
+
+            <a class="atalho-card" href="{{ url_for('produtos.lista') }}">
+                <span class="atalho-titulo">Produtos</span>
+                <span class="atalho-descricao">Cadastrar e atualizar produtos</span>
+            </a>
+
+            <a class="atalho-card" href="{{ url_for('cardapio.lista') }}">
+                <span class="atalho-titulo">Cardápio</span>
+                <span class="atalho-descricao">Controlar itens por unidade</span>
+            </a>
+
+            <a class="atalho-card" href="{{ url_for('clientes.lista') }}">
+                <span class="atalho-titulo">Clientes</span>
+                <span class="atalho-descricao">Consultar e editar clientes</span>
+            </a>
+
+            <a class="atalho-card" href="{{ url_for('pedidos_admin.lista') }}">
+                <span class="atalho-titulo">Pedidos</span>
+                <span class="atalho-descricao">Acompanhar pedidos e pagamentos</span>
+            </a>
+
+            <a class="atalho-card" href="{{ url_for('auditoria.lista') }}">
+                <span class="atalho-titulo">Auditoria</span>
+                <span class="atalho-descricao">Visualizar histórico do sistema</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="header-actions">
+            <h3>Últimos Pedidos</h3>
+            <a class="btn btn-secondary" href="{{ url_for('pedidos_admin.lista') }}">Ver todos</a>
+        </div>
+
+        {% if ultimos_pedidos %}
+            <div class="table-responsive">
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Cliente</th>
+                            <th>Unidade</th>
+                            <th>Status</th>
+                            <th>Pagamento</th>
+                            <th>Total</th>
+                            <th>Criado em</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido in ultimos_pedidos %}
+                        <tr>
+                            <td>{{ pedido.codigo_pedido or "-" }}</td>
+                            <td>{{ pedido.cliente_nome or "-" }}</td>
+                            <td>{{ pedido.unidade_nome or "-" }}</td>
+                            <td>{{ pedido.status_descricao or pedido.status or "-" }}</td>
+                            <td>{{ pedido.pagamento_status_descricao or pedido.pagamento_status or "-" }}</td>
+                            <td>{{ pedido.valor_total_formatado or ("R$ " ~ "%.2f"|format(pedido.valor_total or 0)) }}</td>
+                            <td>{{ pedido.criado_em | datetime_br }}</td>
+                            <td>
+                                <a href="{{ url_for('pedidos_admin.detalhe', pedido_id=pedido.id) }}">Detalhar</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="home-cliente-vazio">
+                <p>Nenhum pedido encontrado até o momento.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

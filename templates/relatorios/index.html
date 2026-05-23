@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/relatorios.css') }}">
+
+<div class="card">
+
+    <div class="relatorios-header">
+        <div>
+            <h2>Relatórios</h2>
+            <p>Área de consultas gerenciais, dashboards e exportações do sistema.</p>
+        </div>
+    </div>
+
+    <div class="relatorios-grid">
+
+        <a class="relatorio-card" href="{{ url_for('dashboard_gerencial.index') }}">
+            <div class="relatorio-icone">📊</div>
+            <div>
+                <h3>Dashboard Gerencial</h3>
+                <p>
+                    Visualize indicadores consolidados de vendas, caixa,
+                    formas de pagamento, filiais e produtos mais vendidos.
+                </p>
+            </div>
+        </a>
+
+        <a class="relatorio-card" href="{{ url_for('relatorio_pedido_balcao.index') }}">
+            <div class="relatorio-icone">📋</div>
+            <div>
+                <h3>Pedido Balcão</h3>
+                <p>
+                    Consulte pedidos realizados no balcão, filtre por período,
+                    filial, status, forma de pagamento e exporte para Excel.
+                </p>
+            </div>
+        </a>
+
+        <a class="relatorio-card" href="{{ url_for('fechamento_caixa.index') }}">
+            <div class="relatorio-icone">💰</div>
+            <div>
+                <h3>Fechamento de Caixa</h3>
+                <p>
+                    Consolide vendas por filial, forma de pagamento,
+                    situação do pagamento e exporte o fechamento para Excel.
+                </p>
+            </div>
+        </a>
+
+        <a class="relatorio-card" href="{{ url_for('relatorio_produtos_vendidos.index') }}">
+            <div class="relatorio-icone">🍽️</div>
+            <div>
+                <h3>Produtos Mais Vendidos</h3>
+                <p>
+                    Veja o ranking dos produtos vendidos no balcão,
+                    agrupado por filial, quantidade e valor total.
+                </p>
+            </div>
+        </a>
+
+        <a class="relatorio-card" href="{{ url_for('relatorio_clientes_compraram.index') }}">
+            <div class="relatorio-icone">👥</div>
+            <div>
+                <h3>Clientes que Mais Compraram</h3>
+                <p>
+                    Identifique clientes recorrentes, total comprado,
+                    ticket médio, quantidade de pedidos e último pedido.
+                </p>
+            </div>
+        </a>
+
+        <a class="relatorio-card" href="{{ url_for('relatorio_movimento_diario.index') }}">
+            <div class="relatorio-icone">📅</div>
+            <div>
+                <h3>Movimento Diário</h3>
+                <p>
+                    Acompanhe o movimento diário de vendas por filial,
+                    pedidos, itens, total pago, pendente e ticket médio.
+                </p>
+            </div>
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="header-actions" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <h2 style="margin:0;">Detalhe do Pedido Balcão</h2>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <a class="btn btn-secondary" href="{{ url_for('pedido_balcao.lista') }}">Voltar</a>
+            <a class="btn btn-primary" href="{{ url_for('pedido_balcao.novo') }}">Novo Pedido</a>
+            {% if permite_edicao %}
+            <a class="btn btn-primary" href="{{ url_for('pedido_balcao.editar', pedido_id=pedido.id) }}">Editar Pedido</a>
+            {% endif %}
+            <a class="btn btn-secondary" target="_blank" href="{{ url_for('pedido_balcao.imprimir', pedido_id=pedido.id) }}">
+                Imprimir Comprovante
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
+        <div>
+            <p><strong>Código:</strong> {{ pedido.codigo_pedido or "-" }}</p>
+            <p><strong>Origem:</strong> {{ pedido.origem or "-" }}</p>
+            <p><strong>Status:</strong> {{ (pedido.status or "-").replace('_', ' ') }}</p>
+            <p><strong>Criado em:</strong> {{ pedido.criado_em_texto or "-" }}</p>
+            <p><strong>Atualizado em:</strong> {{ pedido.atualizado_em_texto or "-" }}</p>
+        </div>
+
+        <div>
+            <p><strong>Cliente:</strong> {{ pedido.cliente_nome or "-" }}</p>
+            <p><strong>E-mail:</strong> {{ pedido.cliente_email or "-" }}</p>
+            <p><strong>Telefone:</strong> {{ pedido.cliente_telefone or "-" }}</p>
+        </div>
+
+        <div>
+            <p><strong>Filial:</strong> {{ pedido.unidade_nome or "-" }}</p>
+            <p><strong>Pagamento:</strong> {{ (pedido.forma_pagamento or "-").replace('_', ' ') }}</p>
+            <p><strong>Situação Pagamento:</strong> {{ (pedido.situacao_pagamento or "PENDENTE").replace('_', ' ') }}</p>
+            <p><strong>Atendente:</strong> {{ pedido.usuario_nome or "-" }}</p>
+        </div>
+    </div>
+
+    <div style="margin-top:12px;">
+        <p><strong>Observação:</strong> {{ pedido.observacao or "-" }}</p>
+        <p><strong>Última alteração por:</strong> {{ pedido.status_atualizado_por_nome or pedido.editado_por_nome or "-" }}</p>
+        <p><strong>Pagamento confirmado por:</strong> {{ pedido.pagamento_confirmado_por_nome or "-" }}</p>
+        <p><strong>Pagamento confirmado em:</strong> {{ pedido.pago_em_texto or "-" }}</p>
+    </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+    <h3>Ações do Pedido</h3>
+
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:end;">
+        <form method="POST" action="{{ url_for('pedido_balcao.atualizar_status', pedido_id=pedido.id) }}">
+            <div class="form-group">
+                <label>Novo Status</label>
+                <select name="novo_status" required>
+                    <option value="">Selecione</option>
+                    {% for status in status_list %}
+                    <option value="{{ status }}">{{ status.replace('_', ' ') }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Atualizar Status</button>
+        </form>
+
+        {% if (pedido.situacao_pagamento or 'PENDENTE') != 'PAGO' and pedido.status != 'CANCELADO' %}
+        <form method="POST" action="{{ url_for('pedido_balcao.pagar', pedido_id=pedido.id) }}"
+              onsubmit="return confirm('Confirma o pagamento deste pedido?');">
+            <button type="submit" class="btn btn-primary">Confirmar Pagamento</button>
+        </form>
+        {% endif %}
+
+        {% if pedido.status != 'CANCELADO' and pedido.status != 'FINALIZADO' %}
+        <form method="POST" action="{{ url_for('pedido_balcao.cancelar', pedido_id=pedido.id) }}"
+              onsubmit="return confirm('Deseja realmente cancelar este pedido?');">
+            <button type="submit" class="btn btn-danger">Cancelar Pedido</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+    <h3>Itens do Pedido</h3>
+
+    <div style="overflow-x:auto;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Quantidade</th>
+                    <th>Valor Unitário</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pedido.itens or [] %}
+                <tr>
+                    <td>{{ item.nome or "-" }}</td>
+                    <td>{{ item.quantidade or 0 }}</td>
+                    <td>R$ {{ '%.2f'|format((item.valor_unitario or 0)|float) }}</td>
+                    <td>R$ {{ '%.2f'|format((item.valor_total or 0)|float) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="3" style="text-align:right;">Subtotal</th>
+                    <th>R$ {{ '%.2f'|format((pedido.subtotal or 0)|float) }}</th>
+                </tr>
+                <tr>
+                    <th colspan="3" style="text-align:right;">Total</th>
+                    <th>R$ {{ '%.2f'|format((pedido.total or 0)|float) }}</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

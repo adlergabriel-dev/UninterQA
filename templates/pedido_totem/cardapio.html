@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">Cardápio</h2>
+            <p class="text-muted mb-0">
+                {{ unidade.nome or unidade.unidade_nome or unidade.nome_unidade or "" }}
+            </p>
+        </div>
+
+        <a href="{{ url_for('pedido_totem.carrinho', unidade_id=unidade.id) }}" class="btn btn-success btn-lg">
+            Ver Pedido
+        </a>
+    </div>
+
+    <div class="row g-4">
+        {% for item in itens %}
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+
+                {% if item.imagem_url %}
+                <img src="{{ item.imagem_url }}" class="card-img-top" style="height: 220px; object-fit: cover;">
+                {% endif %}
+
+                <div class="card-body">
+                    <h4 class="fw-bold">
+                        {{ item.nome_produto or item.produto_nome or item.nome or "Produto sem nome" }}
+                    </h4>
+
+                    <p class="text-muted">
+                        {{ item.descricao or "" }}
+                    </p>
+
+                    <h3 class="text-success fw-bold">
+                        R$ {{ "%.2f"|format((item.preco_venda or item.valor or 0)|float) }}
+                    </h3>
+
+                    <div class="mb-3">
+                        <label class="form-label">Quantidade</label>
+                        <input type="number"
+                               id="qtd_{{ item.id }}"
+                               value="1"
+                               min="1"
+                               class="form-control form-control-lg">
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-primary btn-lg w-100"
+                            onclick="adicionarItem(
+                                '{{ item.id or item.produto_id }}',
+                                '{{ item.produto_id or item.id }}',
+                                '{{ (item.nome_produto or item.produto_nome or item.nome or 'Produto sem nome')|replace("'", "\\'") }}',
+                                {{ (item.preco_venda or item.valor or 0)|float }},
+                                '{{ item.imagem_url or '' }}',
+                                'qtd_{{ item.id }}'
+                            )">
+                        Adicionar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-warning text-center">
+                Nenhum item disponível para esta unidade.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<script>
+const UNIDADE_ID = "{{ unidade.id }}";
+const STORAGE_KEY = "totem_carrinho_" + UNIDADE_ID;
+
+function obterCarrinho() {
+    try {
+        const dados = localStorage.getItem(STORAGE_KEY);
+        return dados ? JSON.parse(dados) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function salvarCarrinho(carrinho) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(carrinho));
+}
+
+function adicionarItem(cardapioId, produtoId, nome, valorUnitario, imagemUrl, inputQtdId) {
+    const inputQtd = document.getElementById(inputQtdId);
+    let quantidade = Number(inputQtd ? inputQtd.value : 1);
+
+    if (!quantidade || quantidade <= 0) {
+        quantidade = 1;
+    }
+
+    let carrinho = obterCarrinho();
+
+    const index = carrinho.findIndex(item => String(item.cardapio_id) === String(cardapioId));
+
+    if (index >= 0) {
+        carrinho[index].quantidade = Number(carrinho[index].quantidade || 0) + quantidade;
+        carrinho[index].valor_unitario = Number(valorUnitario || 0);
+        carrinho[index].produto_nome = nome || "Produto sem nome";
+        carrinho[index].imagem_url = imagemUrl || "";
+    } else {
+        carrinho.push({
+            cardapio_id: String(cardapioId),
+            produto_id: String(produtoId || ""),
+            produto_nome: nome || "Produto sem nome",
+            nome: nome || "Produto sem nome",
+            quantidade: quantidade,
+            valor_unitario: Number(valorUnitario || 0),
+            preco_unitario: Number(valorUnitario || 0),
+            valor: Number(valorUnitario || 0),
+            imagem_url: imagemUrl || ""
+        });
+    }
+
+    salvarCarrinho(carrinho);
+
+    alert("Item adicionado ao pedido!");
+
+    if (inputQtd) {
+        inputQtd.value = 1;
+    }
+}
+</script>
+{% endblock %}

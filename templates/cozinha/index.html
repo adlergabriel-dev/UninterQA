@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cozinha.css') }}">
+
+<div class="cozinha-page">
+
+    <div class="card cozinha-header-card">
+        <div class="cozinha-header">
+            <div>
+                <h2>Cozinha / Produção</h2>
+                <p class="cozinha-subtitulo">
+                    Acompanhamento operacional dos pedidos pagos, recebidos, em preparo e prontos.
+                    Pedidos já fechados no caixa não aparecem mais nesta tela.
+                </p>
+            </div>
+
+            <div class="cozinha-header-actions">
+                <a class="btn btn-secondary" href="{{ url_for('pedidos_admin.lista') }}">
+                    Gestão de Pedidos
+                </a>
+            </div>
+        </div>
+
+        <div class="cozinha-dashboard">
+            <div class="cozinha-indicador">
+                <span>Total em produção</span>
+                <strong>{{ dashboard.total }}</strong>
+            </div>
+
+            <div class="cozinha-indicador">
+                <span>Recebidos</span>
+                <strong>{{ dashboard.recebidos }}</strong>
+            </div>
+
+            <div class="cozinha-indicador">
+                <span>Em preparo</span>
+                <strong>{{ dashboard.em_preparo }}</strong>
+            </div>
+
+            <div class="cozinha-indicador">
+                <span>Prontos / Enviados</span>
+                <strong>{{ dashboard.prontos }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <form method="GET">
+            <div class="cozinha-filtros">
+                <div class="form-group">
+                    <label>Filial</label>
+                    <select name="unidade_id">
+                        <option value="">Todas</option>
+                        {% for unidade in unidades %}
+                            <option value="{{ unidade.id }}" {% if filtros.unidade_id == unidade.id %}selected{% endif %}>
+                                {{ unidade.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Origem</label>
+                    <select name="origem">
+                        <option value="">Todas</option>
+                        {% for item in origem_opcoes %}
+                            <option value="{{ item }}" {% if filtros.origem == item %}selected{% endif %}>
+                                {% if item == "BALCAO" %}
+                                    Balcão
+                                {% elif item == "CLIENTE_WEB" %}
+                                    Cliente Web
+                                {% else %}
+                                    {{ item }}
+                                {% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="filtros-acoes">
+                <button type="submit">Filtrar</button>
+                <a class="btn btn-secondary" href="{{ url_for('cozinha.index') }}">Limpar</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="cozinha-kanban">
+
+        <div class="cozinha-coluna">
+            <div class="cozinha-coluna-header recebidos">
+                <h3>Recebidos</h3>
+                <span>{{ grupos.recebidos|length }}</span>
+            </div>
+
+            {% for pedido in grupos.recebidos %}
+                {% include "cozinha/_pedido_card.html" %}
+            {% else %}
+                <div class="cozinha-vazio">Nenhum pedido recebido.</div>
+            {% endfor %}
+        </div>
+
+        <div class="cozinha-coluna">
+            <div class="cozinha-coluna-header preparo">
+                <h3>Em Preparo</h3>
+                <span>{{ grupos.em_preparo|length }}</span>
+            </div>
+
+            {% for pedido in grupos.em_preparo %}
+                {% include "cozinha/_pedido_card.html" %}
+            {% else %}
+                <div class="cozinha-vazio">Nenhum pedido em preparo.</div>
+            {% endfor %}
+        </div>
+
+        <div class="cozinha-coluna">
+            <div class="cozinha-coluna-header prontos">
+                <h3>Prontos / Enviados</h3>
+                <span>{{ grupos.prontos|length }}</span>
+            </div>
+
+            {% for pedido in grupos.prontos %}
+                {% include "cozinha/_pedido_card.html" %}
+            {% else %}
+                <div class="cozinha-vazio">Nenhum pedido pronto.</div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

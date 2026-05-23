@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="header-actions">
+        <div>
+            <h2>{% if produto and produto.get('id') %}Editar Produto{% else %}Novo Produto{% endif %}</h2>
+            <p style="color:#666; margin: 0;">
+                Cadastre os dados do produto e defina sua imagem de exibição.
+            </p>
+        </div>
+    </div>
+
+    <form method="POST">
+        <div class="filtros-grid">
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" name="nome" value="{{ produto.nome if produto else '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Categoria</label>
+                <input type="text" name="categoria" value="{{ produto.categoria if produto else '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>SKU</label>
+                <input type="text" name="sku" value="{{ produto.sku if produto else '' }}">
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Descrição</label>
+                <input type="text" name="descricao" value="{{ produto.descricao if produto else '' }}">
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Imagem URL / Base64</label>
+                <input
+                    type="text"
+                    id="imagem_url"
+                    name="imagem_url"
+                    value="{{ produto.imagem_url if produto else '' }}"
+                    placeholder="Cole a URL da imagem ou base64"
+                    oninput="atualizarPreviewImagem()"
+                >
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <h3 style="margin-bottom: 16px;">Pré-visualização</h3>
+
+            <div class="preview-imagem-box">
+                {% if produto and produto.imagem_url %}
+                    <img id="preview_imagem" src="{{ produto.imagem_url }}" alt="Prévia da imagem do produto">
+                    <div id="preview_placeholder" class="preview-placeholder" style="display: none;">
+                        Nenhuma imagem informada
+                    </div>
+                {% else %}
+                    <img id="preview_imagem" src="" alt="Prévia da imagem do produto" style="display: none;">
+                    <div id="preview_placeholder" class="preview-placeholder">
+                        Nenhuma imagem informada
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="filtros-acoes">
+            <button type="submit">Salvar</button>
+            <a class="btn btn-secondary" href="{{ url_for('produtos.lista') }}">Voltar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function atualizarPreviewImagem() {
+    const campo = document.getElementById("imagem_url");
+    const img = document.getElementById("preview_imagem");
+    const placeholder = document.getElementById("preview_placeholder");
+
+    if (!campo || !img) return;
+
+    const valor = (campo.value || "").trim();
+
+    if (valor) {
+        img.src = valor;
+        img.style.display = "block";
+
+        if (placeholder) {
+            placeholder.style.display = "none";
+        }
+
+        img.onerror = function () {
+            img.style.display = "none";
+            if (placeholder) {
+                placeholder.style.display = "flex";
+                placeholder.innerText = "Não foi possível carregar a imagem";
+            }
+        };
+
+        img.onload = function () {
+            img.style.display = "block";
+            if (placeholder) {
+                placeholder.style.display = "none";
+            }
+        };
+    } else {
+        img.src = "";
+        img.style.display = "none";
+        if (placeholder) {
+            placeholder.style.display = "flex";
+            placeholder.innerText = "Nenhuma imagem informada";
+        }
+    }
+}
+
+document.addEventListener("DOMContentLoaded", atualizarPreviewImagem);
+</script>
+{% endblock %}

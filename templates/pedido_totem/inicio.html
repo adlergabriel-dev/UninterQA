@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+
+    <div class="text-center mb-5">
+        <h1 class="fw-bold">Autoatendimento</h1>
+        <p class="text-muted">Selecione a unidade para iniciar seu pedido.</p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        {% for unidade in unidades %}
+        <div class="col-md-4">
+            <a href="{{ url_for('pedido_totem.cardapio', unidade_id=unidade.id) }}" class="text-decoration-none">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center py-5">
+                        <h3 class="fw-bold text-dark">
+                            {{ unidade.nome or unidade.unidade_nome }}
+                        </h3>
+                        <p class="text-muted mb-0">Toque para iniciar</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% else %}
+        <div class="col-md-6">
+            <div class="alert alert-warning text-center">
+                Nenhuma unidade ativa encontrada.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% set perfil = session.get('usuario', {}).get('perfil', '').upper() %}
+
+<div class="card">
+    <div class="header-actions">
+        <h2>Clientes</h2>
+
+        {% if perfil in ['ADMIN', 'GERENTE', 'USUARIO'] %}
+            <a class="btn" href="{{ url_for('clientes.novo') }}">Novo Cliente</a>
+        {% endif %}
+    </div>
+
+    <form method="GET" class="card">
+        <div class="filtros-grid">
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" name="nome" value="{{ filtros.nome }}">
+            </div>
+
+            <div class="form-group">
+                <label>Telefone</label>
+                <input type="text" name="telefone" value="{{ filtros.telefone }}">
+            </div>
+
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="text" name="email" value="{{ filtros.email }}">
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status">
+                    <option value="">Todos</option>
+                    <option value="ATIVO" {% if filtros.status == 'ATIVO' %}selected{% endif %}>ATIVO</option>
+                    <option value="INATIVO" {% if filtros.status == 'INATIVO' %}selected{% endif %}>INATIVO</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="filtros-acoes">
+            <button type="submit">Filtrar</button>
+            <a class="btn btn-secondary" href="{{ url_for('clientes.lista') }}">Limpar</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>E-mail</th>
+                    <th>CPF</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in clientes %}
+                <tr>
+                    <td>{{ item.nome }}</td>
+                    <td>{{ item.telefone }}</td>
+                    <td>{{ item.email }}</td>
+                    <td>{{ item.cpf }}</td>
+                    <td>
+                        {% if item.ativo %}
+                            <span class="badge badge-ativo">Ativo</span>
+                        {% else %}
+                            <span class="badge badge-inativo">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if perfil in ['ADMIN', 'GERENTE', 'USUARIO'] %}
+                            <a href="{{ url_for('clientes.editar', cliente_id=item.id) }}">Editar</a>
+
+                            {% if perfil in ['ADMIN', 'GERENTE'] %}
+                                {% if item.ativo %}
+                                    <a href="{{ url_for('clientes.alterar_status', cliente_id=item.id, acao='inativar') }}">Inativar</a>
+                                {% else %}
+                                    <a href="{{ url_for('clientes.alterar_status', cliente_id=item.id, acao='ativar') }}">Ativar</a>
+                                {% endif %}
+                            {% endif %}
+                        {% else %}
+                            <span>-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6">Nenhum cliente cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

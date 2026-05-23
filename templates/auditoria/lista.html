@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% set perfil = session.get('usuario', {}).get('perfil', '').upper() %}
+
+<div class="card">
+    <div class="header-actions">
+        <h2>Auditoria</h2>
+    </div>
+
+    {% if perfil == 'ADMIN' %}
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Entidade</th>
+                <th>Ação</th>
+                <th>Descrição</th>
+                <th>Origem</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in eventos %}
+            <tr>
+                <td>{{ item.criado_em }}</td>
+                <td>{{ item.entidade }}</td>
+                <td>{{ item.acao }}</td>
+                <td>{{ item.descricao }}</td>
+                <td>{{ item.origem }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5">Nenhum evento de auditoria encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>Você não tem permissão para visualizar a auditoria.</p>
+    {% endif %}
+</div>
+{% endblock %}

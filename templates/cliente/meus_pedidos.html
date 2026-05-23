@@ -1,0 +1,93 @@
+{% extends "cliente/base_cliente.html" %}
+
+{% block cliente_content %}
+<div class="cliente-box">
+    <div class="header-actions">
+        <h2>Meus Pedidos</h2>
+        <a class="btn" href="{{ url_for('cliente_pedido.novo_pedido') }}">Novo Pedido</a>
+    </div>
+
+    {% if pedidos %}
+        <div class="meus-pedidos-grid">
+            {% for pedido in pedidos %}
+                <div class="meu-pedido-card">
+                    <h3>Pedido {{ pedido.codigo_pedido }}</h3>
+
+                    <p><strong>Filial:</strong> {{ pedido.unidade_nome or "-" }}</p>
+                    <p><strong>Total:</strong> {{ pedido.valor_total_formatado }}</p>
+                    <p><strong>Itens:</strong> {{ pedido.quantidade_total_itens or pedido.quantidade_itens }}</p>
+                    <p><strong>Criado em:</strong> {{ pedido.criado_em | datetime_br }}</p>
+
+                    <p>
+                        <strong>Andamento:</strong><br>
+                        <span class="badge-status badge-status-{{ pedido.status_cliente_codigo }}">
+                            {{ pedido.status_cliente_descricao }}
+                        </span>
+                    </p>
+
+                    <p class="pedido-mensagem-cliente">
+                        {{ pedido.status_cliente_mensagem }}
+                    </p>
+
+                    <div class="pedido-progresso">
+                        <div class="pedido-progresso-item {% if pedido.status_cliente_etapa >= 1 %}ativo{% endif %}">
+                            <span>1</span>
+                            <small>Pagamento</small>
+                        </div>
+
+                        <div class="pedido-progresso-item {% if pedido.status_cliente_etapa >= 2 %}ativo{% endif %}">
+                            <span>2</span>
+                            <small>Confirmado</small>
+                        </div>
+
+                        <div class="pedido-progresso-item {% if pedido.status_cliente_etapa >= 3 %}ativo{% endif %}">
+                            <span>3</span>
+                            <small>Preparo</small>
+                        </div>
+
+                        <div class="pedido-progresso-item {% if pedido.status_cliente_etapa >= 4 %}ativo{% endif %}">
+                            <span>4</span>
+                            <small>Pronto</small>
+                        </div>
+
+                        <div class="pedido-progresso-item {% if pedido.status_cliente_etapa >= 5 %}ativo{% endif %}">
+                            <span>5</span>
+                            <small>Finalizado</small>
+                        </div>
+                    </div>
+
+                    <p>
+                        <strong>Pagamento:</strong><br>
+                        <span class="badge-pagamento badge-pagamento-{{ (pedido.pagamento_status or '')|lower }}">
+                            {{ pedido.pagamento_status_descricao or pedido.pagamento_status or "-" }}
+                        </span>
+                    </p>
+
+                    <p><strong>Forma de Pagamento:</strong> {{ pedido.pagamento_metodo_descricao or pedido.pagamento_metodo or "-" }}</p>
+
+                    <div class="meu-pedido-acoes">
+                        <a class="btn btn-secondary" href="{{ url_for('cliente_pedido.detalhe_pedido', pedido_id=pedido.id) }}">
+                            Ver Detalhes
+                        </a>
+
+                        {% if pedido.pode_cancelar %}
+                            <form method="POST" action="{{ url_for('cliente_pedido.cancelar_pedido', pedido_id=pedido.id) }}" onsubmit="return confirm('Deseja realmente cancelar este pedido?');">
+                                <button type="submit">Cancelar</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="cliente-card-info">
+            <p>Você ainda não possui pedidos realizados.</p>
+
+            <div class="cliente-acoes">
+                <a class="btn" href="{{ url_for('cliente_pedido.novo_pedido') }}">Fazer Primeiro Pedido</a>
+                <a class="btn btn-secondary" href="{{ url_for('cliente_cardapio.cardapio') }}">Ver Cardápio</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro do Cliente - Raízes do Nordeste</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-page">
+    <div class="login-topo">
+        <div class="login-topo-titulo">Raízes do Nordeste</div>
+        <span class="login-topo-subtitulo">Crie sua conta no portal do cliente</span>
+    </div>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="header-actions">
+                <h2>Cadastro do Cliente</h2>
+                <a class="btn btn-secondary" href="{{ url_for('cliente_auth.login') }}">Já tenho login</a>
+            </div>
+
+            <div class="login-descricao">
+                Preencha seus dados para acessar o portal e realizar seus pedidos.
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for categoria, mensagem in messages %}
+                        <div class="login-alerta {{ categoria }}">{{ mensagem }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" name="nome" value="{{ form_data.nome if form_data else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="text" name="telefone" value="{{ form_data.telefone if form_data else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" name="email" value="{{ form_data.email if form_data else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>CPF</label>
+                    <input type="text" name="cpf" value="{{ form_data.cpf if form_data else '' }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" name="senha" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Confirmar Senha</label>
+                    <input type="password" name="confirmar_senha" required>
+                </div>
+
+                <div class="login-acoes">
+                    <button type="submit">Cadastrar</button>
+                    <a class="btn btn-secondary" href="{{ url_for('cliente_auth.login') }}">Voltar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

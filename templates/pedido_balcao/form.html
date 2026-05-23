@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="header-actions" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <h2 style="margin:0;">Novo Pedido Balcão</h2>
+        <a class="btn btn-secondary" href="{{ url_for('pedido_balcao.lista') }}">Voltar</a>
+    </div>
+</div>
+
+<form method="POST" id="form-pedido-balcao">
+    <input type="hidden" name="itens_json" id="itens_json">
+
+    <div class="card" style="margin-top: 16px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
+            <div class="form-group">
+                <label for="unidade_id">Filial</label>
+                <select name="unidade_id" id="unidade_id" required>
+                    <option value="">Selecione</option>
+                    {% for unidade in unidades %}
+                    <option value="{{ unidade.id }}">{{ unidade.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="cliente_id">Cliente</label>
+                <select name="cliente_id" id="cliente_id" required>
+                    <option value="">Selecione</option>
+                    {% for cliente in clientes %}
+                    <option value="{{ cliente.id }}">
+                        {{ cliente.nome }}
+                        {% if cliente.telefone %} - {{ cliente.telefone }}{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="forma_pagamento">Forma de Pagamento</label>
+                <select name="forma_pagamento" id="forma_pagamento" required>
+                    <option value="">Selecione</option>
+                    {% for item in formas_pagamento %}
+                    <option value="{{ item }}">{{ item.replace('_', ' ') }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="observacao">Observação</label>
+                <input type="text" name="observacao" id="observacao">
+            </div>
+        </div>
+
+        <div style="margin-top:16px;">
+            <button type="button" class="btn btn-secondary" id="btn-toggle-novo-cliente">
+                Cadastrar Cliente Rápido
+            </button>
+        </div>
+    </div>
+
+    <div class="card" id="card-novo-cliente" style="margin-top:16px; display:none;">
+        <div class="header-actions" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+            <h3 style="margin:0;">Novo Cliente</h3>
+            <span id="msg-cliente-rapido" style="color:#666;"></span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:16px;">
+            <div class="form-group">
+                <label for="novo_cliente_nome">Nome</label>
+                <input type="text" id="novo_cliente_nome">
+            </div>
+
+            <div class="form-group">
+                <label for="novo_cliente_telefone">Telefone</label>
+                <input type="text" id="novo_cliente_telefone">
+            </div>
+
+            <div class="form-group">
+                <label for="novo_cliente_email">E-mail</label>
+                <input type="email" id="novo_cliente_email">
+            </div>
+
+            <div class="form-group">
+                <label for="novo_cliente_cpf">CPF</label>
+                <input type="text" id="novo_cliente_cpf">
+            </div>
+        </div>
+
+        <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-primary" id="btn-salvar-novo-cliente">
+                Salvar Cliente
+            </button>
+            <button type="button" class="btn btn-secondary" id="btn-cancelar-novo-cliente">
+                Fechar
+            </button>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+        <h3>Itens do Cardápio</h3>
+        <div id="lista-cardapio">
+            <p>Selecione uma filial para carregar o cardápio.</p>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+        <h3>Resumo do Pedido</h3>
+        <div style="overflow-x:auto;">
+            <table class="table" id="tabela-resumo">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qtd</th>
+                        <th>Valor Unitário</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="4">Nenhum item adicionado.</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="3" style="text-align:right;">Total</th>
+                        <th id="valor-total-geral">R$ 0,00</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div style="margin-top:16px;">
+        <button type="submit" class="btn btn-primary">Criar Pedido Balcão</button>
+    </div>
+</form>
+
+<script>
+const unidadeSelect = document.getElementById("unidade_id");
+const clienteSelect = document.getElementById("cliente_id");
+const listaCardapio = document.getElementById("lista-cardapio");
+const itensJsonInput = document.getElementById("itens_json");
+const tabelaResumoBody = document.querySelector("#tabela-resumo tbody");
+const valorTotalGeral = document.getElementById("valor-total-geral");
+
+const btnToggleNovoCliente = document.getElementById("btn-toggle-novo-cliente");
+const btnSalvarNovoCliente = document.getElementById("btn-salvar-novo-cliente");
+const btnCancelarNovoCliente = document.getElementById("btn-cancelar-novo-cliente");
+const cardNovoCliente = document.getElementById("card-novo-cliente");
+const msgClienteRapido = document.getElementById("msg-cliente-rapido");
+
+const novoClienteNome = document.getElementById("novo_cliente_nome");
+const novoClienteTelefone = document.getElementById("novo_cliente_telefone");
+const novoClienteEmail = document.getElementById("novo_cliente_email");
+const novoClienteCpf = document.getElementById("novo_cliente_cpf");
+
+let carrinho = [];
+let cardapioAtual = [];
+
+function formatarMoeda(valor) {
+    return Number(valor || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+}
+
+function atualizarResumo() {
+    if (!carrinho.length) {
+        tabelaResumoBody.innerHTML = `<tr><td colspan="4">Nenhum item adicionado.</td></tr>`;
+        valorTotalGeral.textContent = "R$ 0,00";
+        itensJsonInput.value = "[]";
+        return;
+    }
+
+    let html = "";
+    let total = 0;
+
+    carrinho.forEach(item => {
+        const totalItem = Number(item.quantidade) * Number(item.valor_unitario);
+        total += totalItem;
+
+        html += `
+            <tr>
+                <td>${item.nome}</td>
+                <td>${item.quantidade}</td>
+                <td>${formatarMoeda(item.valor_unitario)}</td>
+                <td>${formatarMoeda(totalItem)}</td>
+            </tr>
+        `;
+    });
+
+    tabelaResumoBody.innerHTML = html;
+    valorTotalGeral.textContent = formatarMoeda(total);
+    itensJsonInput.value = JSON.stringify(carrinho);
+}
+
+function atualizarCarrinho(cardapioId, produtoId, nome, valorUnitario, quantidade) {
+    quantidade = Number(quantidade || 0);
+
+    const index = carrinho.findIndex(item => item.cardapio_id === cardapioId);
+
+    if (quantidade <= 0) {
+        if (index >= 0) carrinho.splice(index, 1);
+        atualizarResumo();
+        return;
+    }
+
+    const payload = {
+        cardapio_id: cardapioId,
+        produto_id: produtoId,
+        nome: nome,
+        quantidade: quantidade,
+        valor_unitario: Number(valorUnitario)
+    };
+
+    if (index >= 0) {
+        carrinho[index] = payload;
+    } else {
+        carrinho.push(payload);
+    }
+
+    atualizarResumo();
+}
+
+function renderizarCardapio() {
+    if (!cardapioAtual.length) {
+        listaCardapio.innerHTML = "<p>Nenhum item disponível para esta filial.</p>";
+        return;
+    }
+
+    let html = `
+        <div style="overflow-x:auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Valor</th>
+                        <th>Quantidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    cardapioAtual.forEach(item => {
+        html += `
+            <tr>
+                <td>${item.nome || "-"}</td>
+                <td>${formatarMoeda(item.valor || 0)}</td>
+                <td>
+                    <input type="number" min="0" value="0"
+                        onchange="alterarQuantidadeItem('${item.id}', '${item.produto_id || ""}', '${(item.nome || "").replace(/'/g, "\\'")}', ${Number(item.valor || 0)}, this.value)">
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table></div>`;
+    listaCardapio.innerHTML = html;
+}
+
+async function carregarCardapio(unidadeId) {
+    carrinho = [];
+    atualizarResumo();
+
+    if (!unidadeId) {
+        listaCardapio.innerHTML = "<p>Selecione uma filial para carregar o cardápio.</p>";
+        return;
+    }
+
+    listaCardapio.innerHTML = "<p>Carregando cardápio...</p>";
+
+    try {
+        const resposta = await fetch(`/pedido-balcao/api/cardapio/${unidadeId}`);
+        const dados = await resposta.json();
+        cardapioAtual = Array.isArray(dados) ? dados : [];
+        renderizarCardapio();
+    } catch (e) {
+        listaCardapio.innerHTML = "<p>Erro ao carregar cardápio.</p>";
+    }
+}
+
+window.alterarQuantidadeItem = function(cardapioId, produtoId, nome, valorUnitario, quantidade) {
+    atualizarCarrinho(cardapioId, produtoId, nome, valorUnitario, quantidade);
+}
+
+function limparFormularioNovoCliente() {
+    novoClienteNome.value = "";
+    novoClienteTelefone.value = "";
+    novoClienteEmail.value = "";
+    novoClienteCpf.value = "";
+}
+
+function abrirCardNovoCliente() {
+    cardNovoCliente.style.display = "block";
+    msgClienteRapido.textContent = "";
+}
+
+function fecharCardNovoCliente() {
+    cardNovoCliente.style.display = "none";
+    msgClienteRapido.textContent = "";
+    limparFormularioNovoCliente();
+}
+
+btnToggleNovoCliente.addEventListener("click", abrirCardNovoCliente);
+btnCancelarNovoCliente.addEventListener("click", fecharCardNovoCliente);
+
+btnSalvarNovoCliente.addEventListener("click", async function() {
+    const nome = (novoClienteNome.value || "").trim();
+    const telefone = (novoClienteTelefone.value || "").trim();
+    const email = (novoClienteEmail.value || "").trim();
+    const cpf = (novoClienteCpf.value || "").trim();
+
+    if (!nome) {
+        alert("Informe o nome do cliente.");
+        return;
+    }
+
+    if (!telefone) {
+        alert("Informe o telefone do cliente.");
+        return;
+    }
+
+    msgClienteRapido.textContent = "Salvando cliente...";
+
+    const formData = new FormData();
+    formData.append("nome", nome);
+    formData.append("telefone", telefone);
+    formData.append("email", email);
+    formData.append("cpf", cpf);
+
+    try {
+        const resposta = await fetch("{{ url_for('pedido_balcao.api_novo_cliente') }}", {
+            method: "POST",
+            body: formData
+        });
+
+        const dados = await resposta.json();
+
+        if (!dados.ok) {
+            msgClienteRapido.textContent = dados.mensagem || "Erro ao cadastrar cliente.";
+            return;
+        }
+
+        const cliente = dados.cliente;
+
+        let optionExistente = Array.from(clienteSelect.options).find(opt => opt.value === cliente.id);
+        if (!optionExistente) {
+            optionExistente = document.createElement("option");
+            optionExistente.value = cliente.id;
+            optionExistente.text = cliente.telefone
+                ? `${cliente.nome} - ${cliente.telefone}`
+                : cliente.nome;
+            clienteSelect.appendChild(optionExistente);
+        }
+
+        clienteSelect.value = cliente.id;
+        msgClienteRapido.textContent = dados.mensagem || "Cliente cadastrado com sucesso.";
+
+        setTimeout(() => {
+            fecharCardNovoCliente();
+        }, 800);
+
+    } catch (e) {
+        msgClienteRapido.textContent = "Erro ao cadastrar cliente.";
+    }
+});
+
+unidadeSelect.addEventListener("change", function() {
+    carregarCardapio(this.value);
+});
+
+document.getElementById("form-pedido-balcao").addEventListener("submit", function(e) {
+    if (!carrinho.length) {
+        e.preventDefault();
+        alert("Adicione ao menos um item ao pedido.");
+    }
+});
+</script>
+{% endblock %}

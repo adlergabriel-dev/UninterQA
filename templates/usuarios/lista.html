@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% set perfil = session.get('usuario', {}).get('perfil', '').upper() %}
+
+<div class="card">
+    <div class="header-actions">
+        <h2>Usuários Internos</h2>
+
+        {% if perfil == 'ADMIN' %}
+            <a href="{{ url_for('usuarios.novo') }}" class="btn">Novo Usuário</a>
+        {% endif %}
+    </div>
+
+    {% if usuarios %}
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Perfil</th>
+                <th>UID</th>
+                <th>Status</th>
+                <th style="width: 220px;">Ações</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for usuario in usuarios %}
+            {% set doc_id = usuario.get('doc_id') %}
+            <tr>
+                <td>{{ usuario.get('nome') or "-" }}</td>
+                <td>{{ usuario.get('email') or "-" }}</td>
+                <td>{{ usuario.get('perfil') or "-" }}</td>
+                <td>{{ usuario.get('uid') or "-" }}</td>
+
+                <td>
+                    {% if usuario.get('ativo') %}
+                        Ativo
+                    {% else %}
+                        Inativo
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if perfil == 'ADMIN' and doc_id %}
+                        <a class="btn"
+                           href="{{ url_for('usuarios.editar', usuario_id=doc_id) }}">
+                            Editar
+                        </a>
+
+                        {% if usuario.get('ativo') %}
+                            <a class="btn btn-secondary"
+                               href="{{ url_for('usuarios.alterar_status', usuario_id=doc_id, acao='inativar') }}">
+                                Inativar
+                            </a>
+                        {% else %}
+                            <a class="btn"
+                               href="{{ url_for('usuarios.alterar_status', usuario_id=doc_id, acao='ativar') }}">
+                                Ativar
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <span>-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>Nenhum usuário cadastrado.</p>
+    {% endif %}
+</div>
+{% endblock %}

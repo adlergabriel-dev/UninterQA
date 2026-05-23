@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="header-actions">
+        <div>
+            <h2>{{ "Editar Unidade" if unidade else "Nova Unidade" }}</h2>
+            <p style="color:#666; margin: 0;">
+                Cadastre ou atualize os dados da unidade.
+            </p>
+        </div>
+    </div>
+
+    <form method="POST">
+        <div class="filtros-grid">
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" name="nome" value="{{ unidade.nome if unidade else '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Código</label>
+                <input type="text" name="codigo" value="{{ unidade.codigo if unidade else '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Telefone</label>
+                <input type="text" name="telefone" value="{{ unidade.telefone if unidade else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" name="email" value="{{ unidade.email if unidade else '' }}">
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Endereço</label>
+                <input type="text" name="endereco" value="{{ unidade.endereco if unidade else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label>Cidade</label>
+                <input type="text" name="cidade" value="{{ unidade.cidade if unidade else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label>Estado</label>
+                <input type="text" name="estado" value="{{ unidade.estado if unidade else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label>CEP</label>
+                <input type="text" name="cep" value="{{ unidade.cep if unidade else '' }}">
+            </div>
+        </div>
+
+        <div class="filtros-acoes">
+            <button type="submit">Salvar</button>
+            <a class="btn btn-secondary" href="{{ url_for('unidades.lista') }}">Voltar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

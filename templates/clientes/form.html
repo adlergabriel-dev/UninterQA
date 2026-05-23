@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="header-actions">
+        <div>
+            <h2>{{ "Editar Cliente" if cliente and cliente.get('id') else "Novo Cliente" }}</h2>
+            <p style="color:#666; margin: 0;">
+                Cadastre ou atualize os dados do cliente.
+            </p>
+        </div>
+    </div>
+
+    <form method="POST">
+        <div class="filtros-grid">
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" name="nome" value="{{ cliente.nome if cliente else '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Telefone</label>
+                <input type="text" name="telefone" value="{{ cliente.telefone if cliente else '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" name="email" value="{{ cliente.email if cliente else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label>CPF</label>
+                <input type="text" name="cpf" value="{{ cliente.cpf if cliente else '' }}">
+            </div>
+        </div>
+
+        <div class="filtros-acoes">
+            <button type="submit">Salvar</button>
+            <a class="btn btn-secondary" href="{{ url_for('clientes.lista') }}">Voltar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

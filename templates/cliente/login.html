@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login do Cliente - Raízes do Nordeste</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-page">
+    <div class="login-topo">
+        <div class="login-topo-titulo">Raízes do Nordeste</div>
+        <span class="login-topo-subtitulo">Portal do cliente</span>
+    </div>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="header-actions">
+                <h2>Login do Cliente</h2>
+                <a class="btn btn-secondary" href="{{ url_for('cliente_auth.cadastro') }}">Criar cadastro</a>
+            </div>
+
+            <div class="login-descricao">
+                Entre para acompanhar seus pedidos, consultar o cardápio e atualizar seu cadastro.
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for categoria, mensagem in messages %}
+                        <div class="login-alerta {{ categoria }}">{{ mensagem }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" name="email" value="{{ form_data.email if form_data else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" name="senha" required>
+                </div>
+
+                <div class="login-acoes">
+                    <button type="submit">Entrar</button>
+                    <a class="btn btn-secondary" href="{{ url_for('cliente_auth.cadastro') }}">Cadastrar</a>
+                </div>
+            </form>
+
+            <div class="login-area-cliente">
+                <h3>Área interna</h3>
+                <p>
+                    Se você faz parte da equipe interna, utilize o acesso administrativo do sistema.
+                </p>
+
+                <div class="login-acoes">
+                    <a class="btn btn-secondary" href="{{ url_for('auth.login') }}">Entrar como equipe</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

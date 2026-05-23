@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/clientes_compraram.css') }}">
+
+<div class="card clientes-compraram-page">
+
+    <div class="clientes-compraram-header">
+        <div>
+            <h2>Clientes que Mais Compraram</h2>
+            <p class="clientes-compraram-subtitulo">
+                Ranking de clientes por origem, quantidade de pedidos, itens e valor total comprado.
+            </p>
+        </div>
+
+        <div class="clientes-compraram-acoes">
+            <a class="btn btn-secondary" href="{{ url_for('relatorios.index') }}">
+                Voltar
+            </a>
+
+            <a class="btn btn-success"
+               href="{{ url_for('relatorio_clientes_compraram.exportar_excel',
+                    data_inicio=filtros.data_inicio,
+                    data_fim=filtros.data_fim,
+                    unidade_id=filtros.unidade_id,
+                    cliente=filtros.cliente,
+                    origem=filtros.origem,
+                    ignorar_cancelados='1' if filtros.ignorar_cancelados else '0'
+               ) }}">
+                Exportar Excel
+            </a>
+        </div>
+    </div>
+
+    <form method="GET">
+        <div class="filtros-clientes-compraram">
+
+            <div>
+                <label>Data Inicial</label>
+                <input type="date" name="data_inicio" value="{{ filtros.data_inicio }}">
+            </div>
+
+            <div>
+                <label>Data Final</label>
+                <input type="date" name="data_fim" value="{{ filtros.data_fim }}">
+            </div>
+
+            <div>
+                <label>Filial</label>
+                <select name="unidade_id">
+                    <option value="">Todas</option>
+                    {% for unidade in unidades %}
+                        <option value="{{ unidade.id }}"
+                            {% if filtros.unidade_id == unidade.id %}selected{% endif %}>
+                            {{ unidade.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Origem</label>
+                <select name="origem">
+                    <option value="">Todas</option>
+                    <option value="BALCAO" {% if filtros.origem == "BALCAO" %}selected{% endif %}>
+                        Balcão
+                    </option>
+                    <option value="CLIENTE_WEB" {% if filtros.origem == "CLIENTE_WEB" %}selected{% endif %}>
+                        Cliente Web
+                    </option>
+                </select>
+            </div>
+
+            <div>
+                <label>Cliente</label>
+                <input type="text" name="cliente" value="{{ filtros.cliente }}" placeholder="Nome ou telefone">
+            </div>
+
+            <div class="campo-checkbox">
+                <label>&nbsp;</label>
+                <label class="checkbox-linha">
+                    <input type="checkbox" name="ignorar_cancelados" value="1"
+                        {% if filtros.ignorar_cancelados %}checked{% endif %}>
+                    Ignorar cancelados
+                </label>
+            </div>
+
+        </div>
+
+        <div class="acoes-filtro">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('relatorio_clientes_compraram.index') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+
+    <div class="cards-resumo">
+
+        <div class="card-resumo">
+            <div class="titulo">Clientes</div>
+            <div class="valor">{{ totais.total_clientes }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Pedidos</div>
+            <div class="valor">{{ totais.total_pedidos }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Itens</div>
+            <div class="valor">{{ totais.total_itens }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total Comprado</div>
+            <div class="valor">{{ totais.total_comprado|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total Pago</div>
+            <div class="valor destaque-pago">{{ totais.total_pago|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total Pendente</div>
+            <div class="valor destaque-pendente">{{ totais.total_pendente|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Total Cancelado</div>
+            <div class="valor destaque-cancelado">{{ totais.total_cancelado|moeda }}</div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="titulo">Ticket Médio Geral</div>
+            <div class="valor">{{ totais.ticket_medio_geral|moeda }}</div>
+        </div>
+
+    </div>
+
+    <div class="resumos-grid">
+
+        <div class="mini-resumo">
+            <h4>Resumo por Origem</h4>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Origem</th>
+                        <th>Clientes</th>
+                        <th>Pedidos</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nome, item in totais.resumo_por_origem.items() %}
+                        <tr>
+                            <td>{{ nome }}</td>
+                            <td>{{ item.clientes }}</td>
+                            <td>{{ item.pedidos }}</td>
+                            <td>{{ item.valor_total|moeda }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4">Sem dados</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mini-resumo">
+            <h4>Resumo por Filial</h4>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Filial</th>
+                        <th>Clientes</th>
+                        <th>Pedidos</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nome, item in totais.resumo_por_filial.items() %}
+                        <tr>
+                            <td>{{ nome }}</td>
+                            <td>{{ item.clientes }}</td>
+                            <td>{{ item.pedidos }}</td>
+                            <td>{{ item.valor_total|moeda }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4">Sem dados</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="tabela-container">
+        <table class="tabela-clientes-compraram">
+            <thead>
+                <tr>
+                    <th>Ranking</th>
+                    <th>Cliente</th>
+                    <th>Telefone</th>
+                    <th>Origem</th>
+                    <th>Filial</th>
+                    <th>Pedidos</th>
+                    <th>Itens</th>
+                    <th>Total Comprado</th>
+                    <th>Total Pago</th>
+                    <th>Total Pendente</th>
+                    <th>Ticket Médio</th>
+                    <th>Último Pedido</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in linhas %}
+                    <tr>
+                        <td>#{{ loop.index }}</td>
+                        <td>{{ item.cliente_nome }}</td>
+                        <td>{{ item.cliente_telefone }}</td>
+                        <td>{{ item.origem_formatada }}</td>
+                        <td>{{ item.unidade_nome }}</td>
+                        <td>{{ item.quantidade_pedidos }}</td>
+                        <td>{{ item.quantidade_itens }}</td>
+                        <td><strong>{{ item.valor_total|moeda }}</strong></td>
+                        <td>{{ item.valor_pago|moeda }}</td>
+                        <td>{{ item.valor_pendente|moeda }}</td>
+                        <td>{{ item.ticket_medio|moeda }}</td>
+                        <td>{{ item.ultimo_pedido_formatado }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="12" class="texto-vazio">
+                            Nenhum cliente encontrado para os filtros informados.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+    <div class="secao-detalhes">
+        <h3>Detalhamento dos Pedidos</h3>
+
+        <div class="tabela-container">
+            <table class="tabela-clientes-compraram">
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Data</th>
+                        <th>Origem</th>
+                        <th>Cliente</th>
+                        <th>Telefone</th>
+                        <th>Filial</th>
+                        <th>Status</th>
+                        <th>Pagamento</th>
+                        <th>Itens</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in linhas_detalhe %}
+                        <tr>
+                            <td>{{ item.codigo_pedido }}</td>
+                            <td>{{ item.data_formatada }}</td>
+                            <td>{{ item.origem_formatada }}</td>
+                            <td>{{ item.cliente_nome }}</td>
+                            <td>{{ item.cliente_telefone }}</td>
+                            <td>{{ item.unidade_nome }}</td>
+                            <td>
+                                <span class="badge-status {% if item.status in ['CANCELADO', 'CANCELADA'] %}badge-cancelado{% endif %}">
+                                    {{ item.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-status
+                                    {% if item.situacao_pagamento in ['PAGO', 'APROVADO', 'CONFIRMADO'] %}badge-pago{% endif %}
+                                    {% if item.situacao_pagamento in ['PENDENTE', 'AGUARDANDO', 'EM_ABERTO', 'EM ABERTO'] %}badge-pendente{% endif %}
+                                    {% if item.situacao_pagamento in ['CANCELADO', 'ESTORNADO'] %}badge-cancelado{% endif %}
+                                ">
+                                    {{ item.situacao_pagamento }}
+                                </span>
+                            </td>
+                            <td>{{ item.qtd_itens }}</td>
+                            <td><strong>{{ item.valor_total|moeda }}</strong></td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="10" class="texto-vazio">
+                                Nenhum pedido encontrado.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

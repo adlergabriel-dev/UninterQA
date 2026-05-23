@@ -1,0 +1,88 @@
+<div class="cozinha-pedido-card">
+
+    <div class="cozinha-pedido-topo">
+        <div>
+            <strong>{{ pedido.codigo_pedido }}</strong>
+            <span>{{ pedido.cliente_nome or "-" }}</span>
+        </div>
+
+        <span class="{{ pedido.status_classe }}">
+            {{ pedido.status_descricao }}
+        </span>
+    </div>
+
+    <div class="cozinha-pedido-info">
+        <p><strong>Filial:</strong> {{ pedido.unidade_nome or "-" }}</p>
+        <p>
+            <strong>Origem:</strong>
+            {% if pedido.origem == "BALCAO" %}
+                Balcão
+            {% elif pedido.origem == "CLIENTE_WEB" %}
+                Cliente Web
+            {% else %}
+                {{ pedido.origem or "-" }}
+            {% endif %}
+        </p>
+        <p><strong>Total:</strong> {{ pedido.valor_total_formatado }}</p>
+        <p><strong>Criado em:</strong> {{ pedido.criado_em | datetime_br }}</p>
+    </div>
+
+    <div class="cozinha-itens">
+        <h4>Itens</h4>
+
+        {% for item in pedido.itens %}
+            <div class="cozinha-item">
+                <div>
+                    <strong>{{ item.produto_nome or item.nome or "-" }}</strong>
+
+                    {% if item.descricao and item.descricao != "-" %}
+                        <small>{{ item.descricao }}</small>
+                    {% endif %}
+
+                    {% if item.observacao %}
+                        <small>Obs.: {{ item.observacao }}</small>
+                    {% endif %}
+                </div>
+
+                <span>x{{ item.quantidade }}</span>
+            </div>
+        {% else %}
+            <div class="cozinha-item-vazio">
+                Nenhum item encontrado.
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="cozinha-acoes">
+
+        <a class="btn btn-secondary btn-mini"
+           href="{{ url_for('pedidos_admin.detalhe', pedido_id=pedido.id) }}">
+            Detalhar
+        </a>
+
+        {% if pedido.status == "ABERTO" %}
+            <form method="POST" action="{{ url_for('cozinha.alterar_status', pedido_id=pedido.id) }}">
+                <input type="hidden" name="novo_status" value="EM_PREPARO">
+                <button type="submit" class="btn-mini btn-preparo">
+                    Iniciar Preparo
+                </button>
+            </form>
+        {% endif %}
+
+        {% if pedido.status == "EM_PREPARO" %}
+            <form method="POST" action="{{ url_for('cozinha.alterar_status', pedido_id=pedido.id) }}">
+                <input type="hidden" name="novo_status" value="PRONTO">
+                <button type="submit" class="btn-mini btn-pronto">
+                    Marcar Pronto
+                </button>
+            </form>
+        {% endif %}
+
+        {% if pedido.status in ["PRONTO", "ENVIADO"] %}
+            <span class="cozinha-status-final">
+                Aguardando retirada / entrega
+            </span>
+        {% endif %}
+
+    </div>
+</div>

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="header-actions">
+        <div>
+            <h2>{% if editando %}Editar Usuário{% else %}Novo Usuário{% endif %}</h2>
+            <p style="color:#666; margin: 0;">
+                {% if editando %}
+                    Atualize os dados de acesso e perfil do usuário.
+                {% else %}
+                    Cadastre um novo usuário interno no sistema.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <form method="POST" autocomplete="off">
+        <div class="filtros-grid">
+            <div class="form-group">
+                <label>Nome</label>
+                <input
+                    type="text"
+                    name="nome"
+                    value="{{ usuario_form.get('nome', '') if usuario_form else '' }}"
+                    autocomplete="off"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label>E-mail</label>
+                <input
+                    type="email"
+                    name="email"
+                    value="{{ usuario_form.get('email', '') if usuario_form else '' }}"
+                    autocomplete="off"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Perfil</label>
+                <select name="perfil" required>
+                    <option value="">Selecione</option>
+
+                    <option value="ADMIN"
+                        {% if usuario_form and usuario_form.get('perfil') == 'ADMIN' %}selected{% endif %}>
+                        ADMIN
+                    </option>
+
+                    <option value="GERENTE"
+                        {% if usuario_form and usuario_form.get('perfil') == 'GERENTE' %}selected{% endif %}>
+                        GERENTE
+                    </option>
+
+                    <option value="USUARIO"
+                        {% if usuario_form and usuario_form.get('perfil') == 'USUARIO' %}selected{% endif %}>
+                        USUARIO
+                    </option>
+                </select>
+            </div>
+
+            {% if editando %}
+                <div class="form-group">
+                    <label>UID Firebase Auth</label>
+                    <input
+                        type="text"
+                        value="{{ usuario_form.get('uid', '') if usuario_form else '' }}"
+                        readonly
+                        autocomplete="off"
+                    >
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <h3 style="margin-bottom: 16px;">Credenciais</h3>
+
+            <div class="filtros-grid">
+                {% if editando %}
+                    <div class="form-group">
+                        <label>Nova senha</label>
+                        <input
+                            type="password"
+                            name="senha"
+                            placeholder="Preencha apenas se quiser alterar a senha"
+                            autocomplete="new-password"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Confirmar nova senha</label>
+                        <input
+                            type="password"
+                            name="confirmar_senha"
+                            placeholder="Repita a nova senha"
+                            autocomplete="new-password"
+                        >
+                    </div>
+                {% else %}
+                    <div class="form-group">
+                        <label>Senha inicial</label>
+                        <input
+                            type="password"
+                            name="senha"
+                            autocomplete="new-password"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Confirmar senha inicial</label>
+                        <input
+                            type="password"
+                            name="confirmar_senha"
+                            autocomplete="new-password"
+                            required
+                        >
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="filtros-acoes">
+            <button type="submit">Salvar</button>
+            <a href="{{ url_for('usuarios.lista') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
