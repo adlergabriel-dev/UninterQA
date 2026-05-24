@@ -1,0 +1,1 @@
+pyinstaller --clean --onefile --name RaizesDoNordeste --add-data "templates;templates" --add-data "static;static" app.py
